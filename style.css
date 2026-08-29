@@ -72,3 +72,19 @@ footer {
   font-size: .875rem;
 }
 .table-wrap { overflow-x: auto; }
+
+/* 상단 내비 — 감사 스크린샷에서 '개인정보처리방침 링크의 위치'가 보여야 한다 */
+.topnav {
+  display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; align-items: center;
+  padding: .6rem 0 1.1rem; margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--line); font-size: .9375rem;
+}
+.topnav a { text-decoration: none; font-weight: 600; }
+.topnav a:hover { text-decoration: underline; }
+.topnav a.here { color: var(--fg); }
+.yt-badge {
+  display: block; margin: 0 0 1.75rem; padding: .8rem 1rem;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--code-bg);
+  font-size: .9375rem; color: var(--dim);
+}
+.yt-badge b { color: var(--fg); }

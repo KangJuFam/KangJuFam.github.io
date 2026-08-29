@@ -10,6 +10,12 @@
 <body>
 <main>
 
+<nav class="topnav">
+  <a href="index.html">개요</a>
+  <a href="privacy.html" class="here">개인정보처리방침</a>
+  <a href="terms.html">서비스 약관</a>
+</nav>
+
 <h1>개인정보처리방침</h1>
 <p class="lede">
   mac (Minecraft Auto Channel) — 유튜브 채널
@@ -69,25 +75,44 @@
   판매하지 않습니다. API 응답을 저장·캐시하거나 재배포하지 않습니다.
 </p>
 
-<h2>6. 아동의 개인정보</h2>
+<h2>6. 데이터 보관 및 삭제 정책</h2>
+<p>
+  수집하는 사용자 데이터가 없으므로 <strong>보관하는 개인정보도 없습니다.</strong>
+  도구가 보유하는 유일한 자료는 소유자 본인의 OAuth 토큰이며, 아래와 같이 처리합니다.
+</p>
+<ul>
+  <li><strong>보관 위치</strong> — 소유자 PC의 로컬 파일 한 개 (<code>secrets/token.json</code>)</li>
+  <li><strong>보관 기간</strong> — 소유자가 삭제할 때까지. 자동 만료 시 갱신되거나 폐기됩니다</li>
+  <li><strong>삭제 방법</strong> — 소유자가 로컬 토큰 파일을 삭제하면 즉시 폐기됩니다.
+    도구에도 삭제 명령(<code>mac auth --force</code>)이 있습니다</li>
+  <li><strong>접근 권한 철회</strong> —
+    <a href="https://myaccount.google.com/permissions">Google 계정 권한 페이지</a>에서
+    언제든 이 도구의 접근을 철회할 수 있습니다. 철회하면 토큰이 즉시 무효가 됩니다</li>
+  <li><strong>API 데이터</strong> — YouTube API 응답을 저장하거나 캐시하지 않으므로
+    삭제할 사본이 존재하지 않습니다</li>
+  <li><strong>삭제 요청</strong> — 삭제를 요청할 제3자 사용자가 없습니다.
+    문의가 있으면 아래 이메일로 연락하면 30일 이내에 답변합니다</li>
+</ul>
+
+<h2>7. 아동의 개인정보</h2>
 <p>
   이 도구는 일반 대중을 위한 서비스가 아니며 소유자 본인만 사용합니다.
   아동을 포함한 어떤 사용자로부터도 정보를 수집하지 않습니다.
 </p>
 
-<h2>7. YouTube 서비스 약관</h2>
+<h2>8. YouTube 서비스 약관</h2>
 <p>
   이 도구는 YouTube API 서비스를 사용합니다. 사용에는
   <a href="https://www.youtube.com/t/terms">YouTube 서비스 약관</a>과
   <a href="https://policies.google.com/privacy">Google 개인정보처리방침</a>이 적용됩니다.
 </p>
 
-<h2>8. 변경</h2>
+<h2>9. 변경</h2>
 <p>
   이 방침이 바뀌면 이 페이지를 갱신하고 상단의 시행일을 고칩니다.
 </p>
 
-<h2>9. 문의</h2>
+<h2>10. 문의</h2>
 <p>
   <a href="mailto:kj871720@gmail.com">kj871720@gmail.com</a>
 </p>
@@ -151,25 +176,48 @@
   advertisers or data brokers. We do not store, cache or redistribute API responses.
 </p>
 
-<h3>6. Children's privacy</h3>
+<h3>6. Data retention and deletion policy</h3>
+<p>
+  Because we collect no user data, <strong>we retain no personal information.</strong>
+  The only material the tool holds is the owner's own OAuth token, handled as follows.
+</p>
+<ul>
+  <li><strong>Where it is stored</strong> — one local file on the owner's PC
+    (<code>secrets/token.json</code>)</li>
+  <li><strong>How long</strong> — until the owner deletes it. Expired tokens are
+    refreshed or discarded</li>
+  <li><strong>How to delete it</strong> — deleting the local token file destroys it
+    immediately. The tool also provides a delete command
+    (<code>mac auth --force</code>)</li>
+  <li><strong>Revoking access</strong> — the owner can revoke this tool's access at
+    any time at <a href="https://myaccount.google.com/permissions">Google Account
+    permissions</a>, which invalidates the token immediately</li>
+  <li><strong>API data</strong> — we do not store or cache YouTube API responses, so
+    there is no copy to delete</li>
+  <li><strong>Deletion requests</strong> — there are no third-party users who could
+    request deletion. Any enquiry sent to the address below is answered within
+    30 days</li>
+</ul>
+
+<h3>7. Children's privacy</h3>
 <p>
   This tool is not a service for the general public and is used solely by the owner.
   We collect no information from any user, including children.
 </p>
 
-<h3>7. YouTube Terms of Service</h3>
+<h3>8. YouTube Terms of Service</h3>
 <p>
   This tool uses YouTube API Services. Use is subject to the
   <a href="https://www.youtube.com/t/terms">YouTube Terms of Service</a> and the
   <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.
 </p>
 
-<h3>8. Changes</h3>
+<h3>9. Changes</h3>
 <p>
   If this policy changes we will update this page and revise the effective date above.
 </p>
 
-<h3>9. Contact</h3>
+<h3>10. Contact</h3>
 <p>
   <a href="mailto:kj871720@gmail.com">kj871720@gmail.com</a>
 </p>
