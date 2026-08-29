@@ -88,3 +88,20 @@ footer {
   font-size: .9375rem; color: var(--dim);
 }
 .yt-badge b { color: var(--fg); }
+
+/* 인쇄 / PDF 저장 — 감사 증빙은 PDF 로 낸다.
+   다크 모드 화면 그대로 인쇄되면 검은 배경에 검은 글씨가 될 수 있어 명시적으로 고정한다.
+   링크는 감사 항목이므로 색을 남기고, 섹션이 페이지 사이에서 잘리지 않게 한다. */
+@media print {
+  :root {
+    --bg: #ffffff; --fg: #000000; --dim: #333333;
+    --line: #bbbbbb; --accent: #1a5c12; --code-bg: #f0f0f0;
+  }
+  body { padding: 0 0 1rem; font-size: 11.5pt; }
+  main { max-width: none; }
+  a { color: #0b4ea2; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  ul, table, .callout, .yt-badge { break-inside: avoid; page-break-inside: avoid; }
+  .topnav { border-bottom: 1px solid #bbb; }
+  .lang { break-before: page; page-break-before: always; }
+}
