@@ -36,7 +36,7 @@
 </ul>
 
 <h2>2. 앱이 요구하는 권한</h2>
-<ul><li>인터넷 접근(<code>INTERNET</code>) — 광고를 받아오는 데만 쓰입니다.</li><li>알림(<code>POST_NOTIFICATIONS</code>) — 감자가 배고프거나 졸릴 때 하루 최대 2회, 밤 21시~아침 9시에는 보내지 않는 <strong>로컬 알림</strong>입니다. 서버에서 오는 푸시가 아니며 설정에서 끌 수 있습니다.</li><li>화면 켜 두기(<code>WAKE_LOCK</code>) — "화면 켜 두기" 설정을 켰을 때만 씁니다.</li></ul><p>카메라·위치·연락처·저장소 권한은 요청하지 않습니다. 진동(VIBRATE) — 꽃잎이 스칠 때 짧게 진동하는 데만 쓰입니다.</p>
+<ul><li>인터넷 접근(<code>INTERNET</code>) — 광고를 받아오는 데만 쓰입니다.</li><li>진동(<code>VIBRATE</code>) — 꽃잎이 스칠 때 짧게 진동하는 데만 쓰입니다.</li></ul><p>카메라·위치·연락처·저장소 권한은 요청하지 않습니다.</p>
 
 <h2>3. 광고 — Google AdMob</h2>
 <p>
@@ -84,7 +84,7 @@
 <p>Your best-run and best-chain records (seconds survived) and settings are kept in the app's local storage. They never leave the device and are removed when you uninstall the app.</p>
 
 <h3>2. Permissions</h3>
-<p><code>INTERNET</code> (to fetch ads), <code>POST_NOTIFICATIONS</code> (local reminders, at most twice a day and never between 21:00 and 09:00; can be turned off in settings — no server push) and <code>WAKE_LOCK</code> (only when "keep screen on" is enabled). No camera, location, contacts or storage permissions are requested.</p>
+<p><code>INTERNET</code> (to fetch ads) and <code>VIBRATE</code> (short haptic feedback when a petal grazes you). No camera, location, contacts or storage permissions are requested.</p>
 
 <h3>3. Advertising — Google AdMob</h3>
 <p>The app is free and ad-supported. Ads are provided by Google LLC's AdMob. To select ads and prevent fraud the AdMob SDK may process the Android Advertising ID (which you can reset or opt out of in device settings), device information (model, OS version, language, screen size), an approximate location inferred from the IP address, and ad events (impressions, clicks). Google handles this data under its own policies: <a href="https://policies.google.com/privacy">Google Privacy Policy</a> · <a href="https://policies.google.com/technologies/ads">How Google uses information from ads</a>. The developer does not access or retain this data.</p>
