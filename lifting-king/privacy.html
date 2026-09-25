@@ -31,7 +31,7 @@
 
 <h2>1. 앱이 기기 안에만 저장하는 것</h2>
 <ul>
-  <li>코인, 가진 신발과 공 무늬, 최고 기록, 판마다의 기록(콤보 수, 판 길이, 날씨 같은 게임 값) — 기기 내부의 앱 전용 저장소에만 저장됩니다. Android 자동 백업이 켜진 기기에서는 사용자의 Google 계정 백업에 함께 포함될 수 있습니다.</li>
+  <li>코인, 가진 신발 · 공 · 운동장과 고른 장비, 최고 기록, 설정(조작 방식 · 소리 · 진동), 광고 보상을 받은 횟수와 광고 간격 기록, 판마다의 기록(콤보 수, 판 길이, 날씨 같은 게임 값) — 기기 내부의 앱 전용 저장소에만 저장됩니다. Android 자동 백업이 켜진 기기에서는 사용자의 Google 계정 백업에 함께 포함될 수 있습니다.</li>
   <li>이 값들은 앱을 삭제하면 함께 지워집니다. 외부로 전송되지 않습니다.</li>
 </ul>
 
@@ -46,7 +46,7 @@
 
 <h2>3. 광고 — Google AdMob</h2>
 <p>
-  이 앱은 무료이며 광고로 운영됩니다. 광고는 Google LLC 의 <strong>AdMob</strong> 이 제공하며, 사용자가 직접 고른 경우에만 보는 보상형 광고(결과 화면의 「코인 2배」)입니다.
+  이 앱은 무료이며 광고로 운영됩니다. 광고는 Google LLC 의 <strong>AdMob</strong> 이 제공하며, 두 가지입니다. ① 사용자가 직접 고를 때만 보는 보상형 광고 — 결과 화면의 코인 보상, 상점의 무료 코인과 한 판 체험. ② 판이 끝난 뒤 결과 화면에서 가끔 나오는 전면 광고. 게임 도중에는 광고가 나오지 않습니다.
   AdMob SDK 는 광고를 고르고 부정 클릭을 막기 위해 다음을 처리할 수 있습니다.
 </p>
 <ul>
@@ -59,7 +59,7 @@
   <a href="https://policies.google.com/technologies/ads">Google 의 광고 기술</a>.
   개발자는 이 정보에 접근하지 않으며, 별도로 보관하지 않습니다.
 </p>
-<p>맞춤 광고를 원하지 않으면 기기 설정의 광고 메뉴(기기마다 이름이 다를 수 있음)에서 광고 ID 를 재설정하거나 삭제하면 됩니다. 유럽 경제 지역 등 동의가 필요한 지역에서는 앱이 처음 켜질 때 동의 창을 띄우고, 결과 화면과 상점 화면의 톱니 버튼에서 언제든 바꿀 수 있습니다.</p>
+<p>맞춤 광고를 원하지 않으면 기기 설정의 광고 메뉴(기기마다 이름이 다를 수 있음)에서 광고 ID 를 재설정하거나 삭제하면 됩니다. 유럽 경제 지역 등 동의가 필요한 지역에서는 앱이 처음 켜질 때 동의 창을 띄우고, 결과 화면의 톱니 버튼 → 설정 화면의 자물쇠 버튼에서 언제든 바꿀 수 있습니다.</p>
 
 <h2>4. 제3자 제공</h2>
 <p>앱에 포함된 Google AdMob SDK 가 3장의 정보를 Google 에 전송합니다. 개발자가 직접 수집·보관하거나 제3자에게 제공하는 개인정보는 없습니다.</p>
@@ -87,14 +87,14 @@
 <p><strong>This app has no account or sign-in and does not collect any personally identifiable information</strong> (name, e-mail, phone number, etc.). The app itself sends nothing to any server. Ads are served by the Google AdMob SDK; what that SDK processes is described below.</p>
 
 <h3>1. Data stored only on your device</h3>
-<p>Coins, owned shoes and ball patterns, best record and per-run records (combo count, run length, game values such as weather) are kept in the app's private storage and may be included in your Google account backup if Android Auto Backup is on. They never leave the device and are removed when you uninstall the app.</p>
+<p>Coins, owned and equipped shoes, balls and pitches, best records, settings (control mode, sound, vibration), counts of ad rewards and ad pacing, and per-run records (combo count, run length, game values such as weather) are kept in the app's private storage and may be included in your Google account backup if Android Auto Backup is on. They never leave the device and are removed when you uninstall the app.</p>
 
 <h3>2. Permissions</h3>
 <p><code>INTERNET</code> (for ads and ad consent), <code>AD_ID</code> (for AdMob ads), permissions the ads SDK adds automatically (network state, Android ad services: advertising ID, attribution, topics; background work) and <code>VIBRATE</code> (short haptic feedback when you kick the ball). No camera, location, contacts or storage permissions are requested.</p>
 
 <h3>3. Advertising — Google AdMob</h3>
-<p>The app is free and ad-supported. Ads are provided by Google LLC's AdMob and are opt-in rewarded ads only (the "double coins" button on the result screen). To select ads and prevent fraud the AdMob SDK may process the Android Advertising ID (which you can reset or opt out of in device settings), device information (model, OS version, language, screen size), an approximate location inferred from the IP address, ad events (impressions, clicks) and crash/performance diagnostics. Google handles this data under its own policies: <a href="https://policies.google.com/privacy">Google Privacy Policy</a> · <a href="https://policies.google.com/technologies/ads">How Google uses information from ads</a>. The developer does not access or retain this data.</p>
-<p>To limit personalised ads, reset or delete your advertising ID from the Ads menu in your device settings (the name varies by device). In regions that require consent (such as the EEA) a consent form is shown on first launch and can be changed at any time from the gear button on the result screen or in the shop.</p>
+<p>The app is free and ad-supported. Ads are provided by Google LLC's AdMob and are of two kinds: opt-in rewarded ads (coin rewards on the result screen, free coins and one-run trials in the shop) and occasional full-screen ads shown on the result screen after a run ends. No ads appear during play. To select ads and prevent fraud the AdMob SDK may process the Android Advertising ID (which you can reset or opt out of in device settings), device information (model, OS version, language, screen size), an approximate location inferred from the IP address, ad events (impressions, clicks) and crash/performance diagnostics. Google handles this data under its own policies: <a href="https://policies.google.com/privacy">Google Privacy Policy</a> · <a href="https://policies.google.com/technologies/ads">How Google uses information from ads</a>. The developer does not access or retain this data.</p>
+<p>To limit personalised ads, reset or delete your advertising ID from the Ads menu in your device settings (the name varies by device). In regions that require consent (such as the EEA) a consent form is shown on first launch and can be changed at any time from the gear button on the result screen, then the lock button in Settings.</p>
 
 <h3>4. Third parties</h3>
 <p>The Google AdMob SDK included in the app sends the data in section 3 to Google. The developer itself collects, retains or shares no personal data.</p>
