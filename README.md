@@ -9,6 +9,7 @@ YouTube API 규정 준수 감사가 **기본 액세스 URL**과 **개인정보�
 |---|---|---|
 | `index.html` | <https://kangjufam.github.io/> | 감사 양식 "기본 액세스 URL" |
 | `privacy.html` | <https://kangjufam.github.io/privacy.html> | 감사 양식 "개인정보처리방침 URL" |
+| `games-terms.html` | <https://kangjufam.github.io/games-terms.html> | Play 게임 앱 전부의 「서비스 약관」 링크 (판매자 상태 선언, 2026-11-04) — 위 `terms.html` 은 mac 용이라 따로 둔다 |
 
 내용을 고치면 `minecraft-auto-channel/docs/API-AUDIT.md` 의 답안과 어긋나지 않는지
 확인할 것. 감사팀은 양쪽을 대조한다.
