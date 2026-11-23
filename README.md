@@ -10,6 +10,7 @@ YouTube API 규정 준수 감사가 **기본 액세스 URL**과 **개인정보�
 | `index.html` | <https://kangjufam.github.io/> | 감사 양식 "기본 액세스 URL" |
 | `privacy.html` | <https://kangjufam.github.io/privacy.html> | 감사 양식 "개인정보처리방침 URL" |
 | `games-terms.html` | <https://kangjufam.github.io/games-terms.html> | Play 게임 앱 전부의 「서비스 약관」 링크 (판매자 상태 선언, 2026-11-04) — 위 `terms.html` 은 mac 용이라 따로 둔다. **새 게임을 Play 에 올리면 1장 목록(ko · en)에 더한다** — Play 가 「앱에 구체적으로 적용」을 요구. 앱마다 링크는 `games-terms.html#<패키지 끝 이름>` |
+| `mulgil-rush/play/` | <https://kangjufam.github.io/mulgil-rush/play/> | 물길 러시 웹 빌드 — 아이폰 · 브라우저 사람 테스트용(검색 제외 noindex). 빌드 원본은 `kangjufam-app-mulgil-rush` `BuildApk.BuildWeb` → `app/Builds/web` 을 통째로 덮어쓴다 |
 
 내용을 고치면 `minecraft-auto-channel/docs/API-AUDIT.md` 의 답안과 어긋나지 않는지
 확인할 것. 감사팀은 양쪽을 대조한다.
