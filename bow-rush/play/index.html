@@ -75,7 +75,7 @@ dd{margin:0;color:var(--paper);font-variant-numeric:tabular-nums;text-align:righ
 <script>
 (()=>{'use strict';
 // 수치 — 전부 제안값. 프로토에서 여기를 고쳐 맞춘다
-const C={eye:1.6,fov:62,fovDrawn:46,horizon:.42,
+const C={eye:1.6,fov:62,horizon:.42, // 꾹 눌러도 확대하지 않는다(9차) — 화면은 가만히, 조준점만 움직인다
   speed0:10,speedStep:1.5,speedMax:19,speedEvery:20,
   fullDraw:.6,minDraw:.06,wobbleAfter:1.2,wobbleRamp:.6,wobblePx:16,sens:1.15,aimLift:.12,
   focusScale:.35,breathUse:1.6,breathHit:.25, // 꾹 누르면 세상이 느려진다(집중). 숨은 1.6초 버티고, 맞힐 때마다 1/4 씩만 돌아온다 — 시간으로는 안 찬다
@@ -106,7 +106,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const hash=n=>{const s=Math.sin(n*127.1)*43758.5453;return s-Math.floor(s)};
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
-let W=0,H=0,DPR=1,F=600,HY=300,SAT=0,OX=0,OY=0,fov=C.fov,focus=0,S=null,sky,water,logLine=''; // OX · OY: 확대 중심을 조준점으로 옮긴 만큼 — 세계 그림만 옮긴다
+let W=0,H=0,DPR=1,F=600,HY=300,SAT=0,focus=0,S=null,sky,water,logLine='';
 const say=text=>{S.banner={text,t:0}}; // 화면 가운데 크게 한마디
 const aim={x:0,y:0,down:false,id:-1,held:0,lx:0,ly:0,cue:false,marks:[],sx:0,sy:0,still:0}; // sx · sy · still: 조준점이 멈춘 자리와 멈춰 있던 시간
 // 로봇의 어디를 맞혔나 — 발에서 잰 높이와 옆으로 벗어난 거리로 가른다
@@ -114,7 +114,7 @@ const zoneOf=(lx,ly)=>{const b=ly/C.foeScale,a=Math.abs(lx)/C.foeScale;return b>
 
 function resize(){
   DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth||innerWidth;H=cv.clientHeight||innerHeight;SAT=$('sat').offsetHeight; // SAT: 폰 위쪽 노치 · 상태 표시줄 높이
-  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);HY=H*C.horizon;F=(H/2)/Math.tan(fov*Math.PI/360);
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);HY=H*C.horizon;F=(H/2)/Math.tan(C.fov*Math.PI/360);
   if(!aim.x){aim.x=W/2;aim.y=HY-H*.04}
   aim.x=clamp(aim.x,8,W-8);aim.y=clamp(aim.y,8,H*.8);
 }
@@ -124,15 +124,8 @@ const mkGlow=rgb=>{const cvs=document.createElement('canvas');cvs.width=cvs.heig
   r.addColorStop(0,`rgba(${rgb},.6)`);r.addColorStop(.25,`rgba(${rgb},.32)`);r.addColorStop(1,`rgba(${rgb},0)`);
   c.fillStyle=r;c.fillRect(0,0,128,128);return cvs};
 const glow=mkGlow('255,190,120'),glowR=mkGlow('255,84,64'),glowC=mkGlow('120,220,255');
-// 확대는 조준점을 중심으로 — 꾹 누르는 동안 표적이 조준점 밑에서 밀려나지 않는다. 풀릴 때는 화면 가운데로 돌아온다
-function zoom(want,rdt){
-  const F1=F,F0=(H/2)/Math.tan(C.fov*Math.PI/360);
-  fov+=(want-fov)*Math.min(1,rdt*10);F=(H/2)/Math.tan(fov*Math.PI/360);
-  if(F>=F1){const k=F/F1,ax=aim.x-W/2,ay=aim.y-HY;OX=ax-(ax-OX)*k;OY=ay-(ay-OY)*k}
-  else{const s=F1>F0+1e-6?Math.max(0,(F-F0)/(F1-F0)):0;OX*=s;OY*=s}
-}
 // 카메라 기준 (x, y, 앞 거리 z) → 화면
-const P=(x,y,z)=>{const k=F/z;return[W/2+OX+x*k,HY+OY-(y-C.eye)*k,k]};
+const P=(x,y,z)=>{const k=F/z;return[W/2+x*k,HY-(y-C.eye)*k,k]};
 
 // ── 소리 (코드 합성)
 let AC=null,master=null,cr=null;
@@ -201,7 +194,7 @@ function spawn(){
 }
 // 화면 점 (sx, sy) 으로 쏜 화살이 맞히는 것들, 가까운 순. 쏜 순간에 다 정해진다
 function cast(sx,sy,gold,p){
-  const dx=(sx-W/2-OX)/F,dy=-(sy-HY-OY)/F,list=[];
+  const dx=(sx-W/2)/F,dy=-(sy-HY)/F,list=[];
   const test=(o,rx,ry)=>{const z=o.z-S.camZ;if(z<.8||z>90||o.claimed||!o.alive)return;const hx=dx*z,hy=C.eye+dy*z; // 화살이 그 거리에서 지나는 점
     if(Math.hypot((o.x-hx)/rx,(mid(o)-hy)/ry)<=1)list.push({z,o,lx:hx-o.x,ly:hy-o.y})};
   for(const f of S.foes)test(f,.48*C.foeScale,.88*C.foeScale);
@@ -245,7 +238,7 @@ function loose(sx,sy,p,o={}){
   if(bl)S.pending.push({at:S.t+d+bl.z/C.arrowSpeed,clang:bl}); // 방패에 막혔다 — 화살만 잃는다
   hits.forEach((h,i)=>{h.o.claimed=true;S.pending.push({at:S.t+d+h.z/C.arrowSpeed,o:h.o,lx:h.lx,ly:h.ly,i,n,last:i===n-1,hot})});
   S.pending.sort((a,b)=>a.at-b.at);
-  S.flights.push({dx:(sx-W/2-OX)/F,dy:-(sy-HY-OY)/F,z0:S.camZ,t0:S.t+d,gold,hot,bonus:!!bonus,miss:!n&&!bl,end:bl?bl.z:n?hits[n-1].z:(gold?90:C.weakRange+p*C.weakRangePerPower)});
+  S.flights.push({dx:(sx-W/2)/F,dy:-(sy-HY)/F,z0:S.camZ,t0:S.t+d,gold,hot,bonus:!!bonus,miss:!n&&!bl,end:bl?bl.z:n?hits[n-1].z:(gold?90:C.weakRange+p*C.weakRangePerPower)});
   if(!bonus)sfx.shoot(p);return hits;
 }
 // 덤 추적 화살 — 맞힌 자리(h) 둘레의 아직 안 노린 표적으로 ex 발. 내가 로봇의 머리를 맞혔으면 덤도 머리로 간다
@@ -452,7 +445,7 @@ function draw(){
   const sh=RM?0:S.shake*36;
   g.save();g.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
   const rm=roomAt(S.camZ),RA=ROOMS[rm.i],RB=ROOMS[(rm.i+1)%ROOMS.length],col=k=>mix(RA[k],RB[k],rm.t); // 방 색 — 틈을 지나는 동안 다음 방 색으로 번진다
-  const hy=HY+OY; // 지평선 — 확대 중심을 따라 움직인다
+  const hy=HY; // 지평선
   sky=g.createLinearGradient(0,0,0,hy);sky.addColorStop(0,col('sky0'));sky.addColorStop(1,col('sky1'));
   water=g.createLinearGradient(0,hy,0,H);water.addColorStop(0,col('w0'));water.addColorStop(.35,col('w1'));water.addColorStop(1,col('w2'));
   g.fillStyle=sky;g.fillRect(-20,-20,W+40,hy+20);
@@ -471,7 +464,7 @@ function draw(){
     let p=P(side*6.5,0,1.5);g.beginPath();g.moveTo(p[0],p[1]);
     for(let zw=Math.ceil((S.camZ+1.5)/3)*3;zw<S.camZ+200;zw+=3){const h=bankH(zw,side);p=P(side*6.5,h,zw-S.camZ);g.lineTo(p[0],p[1]);
       if(ROOMS[roomAt(zw).i].wall===2){p=P(side*6.5,h,zw+2.9-S.camZ);g.lineTo(p[0],p[1])}} // 공장은 지붕이 반듯하다 — 계단 모양
-    g.lineTo(W/2+OX,hy);g.closePath();g.fill();
+    g.lineTo(W/2,hy);g.closePath();g.fill();
   }
   drawGate((Math.floor(S.camZ/SEG)+1)*SEG);
   // 순찰정 · 로봇 · 드론 — 먼 것부터
@@ -550,7 +543,7 @@ function showResult(){
   $('rStats').innerHTML=[['버틴 시간',s.t.toFixed(1)+'초'],['닿은 방',`${s.roomN+1}번째 · ${ROOMS[s.roomN%ROOMS.length].name}`],['쓰러뜨린 로봇',s.kills],['떨어뜨린 드론',s.downs],['쏜 화살',s.shots],['명중률',pct(s.hitShots,s.shots)],
     ['꿰기 2 · 3 · 4',`${s.chain[2]} · ${s.chain[3]} · ${s.chain[4]}`],['첫 2꿰기',f2],['최고 콤보',s.best],['맞은 횟수',s.hurts]]
     .map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
-  logLine=`활러시 web8 콤보 |끌기 ${+$('optDrag').checked} | ${s.opt.practice?'연습':'본판'} | 방 ${r0+1}→${s.roomN+1} | 거리 ${d}m | ${s.t.toFixed(1)}초 | 로봇 ${s.kills} 드론 ${s.downs} | 발사 ${s.shots} | 명중 ${pct(s.hitShots,s.shots)} | 꿰기 1·2·3·4 = ${s.chain.slice(1).join('·')} | 첫2꿰기 ${f2} | 최고콤보 ${s.best} | 맞음 ${s.hurts} | 보조 ${+!!s.opt.assist} 느림 ${+!!s.opt.slow} | ${W}x${H}`;
+  logLine=`활러시 web9 확대없음 |끌기 ${+$('optDrag').checked} | ${s.opt.practice?'연습':'본판'} | 방 ${r0+1}→${s.roomN+1} | 거리 ${d}m | ${s.t.toFixed(1)}초 | 로봇 ${s.kills} 드론 ${s.downs} | 발사 ${s.shots} | 명중 ${pct(s.hitShots,s.shots)} | 꿰기 1·2·3·4 = ${s.chain.slice(1).join('·')} | 첫2꿰기 ${f2} | 최고콤보 ${s.best} | 맞음 ${s.hurts} | 보조 ${+!!s.opt.assist} 느림 ${+!!s.opt.slow} | ${W}x${H}`;
   $('rLog').textContent=logLine;$('copy').textContent='기록 복사';$('result').hidden=false;
 }
 function start(){
@@ -620,11 +613,6 @@ function selfTest(){
   aim.marks=S.foes.map(o=>({o,lx:0,ly:2.1}));aim.held=.3;aim.down=true;fire();aim.down=false;S.t+=1;while(S.pending.length)land(S.pending.shift());
   ok(S.kills===3&&S.arrows===6&&S.streak===11&&S.best===11,'콤보 8 이면 찍어 쏜 화살 중 하나는 값을 안 뺀다');
   S.streak=16;draw();S.streak=0;S.broke={n:16,t:.3};draw(); // 콤보 표시 · 끊김이 오류 없이 그려진다
-  {aim.x=W*.85;aim.y=H*.25;const q=P(0,C.eye,1e6),wx=(aim.x-q[0])/F*1e6,wy=C.eye-(aim.y-q[1])/F*1e6; // 조준점 밑의 아주 먼 점
-    for(let i=0;i<40;i++)zoom(C.fovDrawn,1/60);const a=P(wx,wy,1e6);
-    ok(fov<C.fov-10&&Math.hypot(a[0]-aim.x,a[1]-aim.y)<.5,'확대해도 조준점 밑의 것이 밀려나지 않는다');
-    for(let i=0;i<120;i++)zoom(C.fov,1/60);ok(Math.hypot(OX,OY)<1,'확대가 풀리면 화면 가운데로 돌아온다');
-    fov=C.fov;F=(H/2)/Math.tan(fov*Math.PI/360);OX=OY=0}
   document.body.dataset.selftest='ok';console.log('selftest ok');
   newRun({idle:true});
 }
@@ -642,8 +630,6 @@ requestAnimationFrame(function loop(ts){
       else if((aim.still+=rdt)>=C.markDwell){aim.still=0;mark(aimPoint())}
     }
   }
-  const want=aim.down?C.fov+(C.fovDrawn-C.fov)*Math.min(1,aim.held/C.fullDraw):C.fov; // 당기면 확대
-  zoom(want,rdt);
   const calm=aim.down&&aim.held>.1&&S.breath>0&&!S.over&&!S.opt.idle; // 집중: 꾹 누르는 동안 세상이 느려진다
   focus+=((calm?1:0)-focus)*Math.min(1,rdt*12);
   if(calm)S.breath=Math.max(0,S.breath-rdt/C.breathUse); // 돌아오는 것은 land() 에서 맞힐 때만
