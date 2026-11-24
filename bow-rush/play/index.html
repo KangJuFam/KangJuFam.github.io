@@ -42,6 +42,7 @@ dd{margin:0;color:var(--paper);font-variant-numeric:tabular-nums;text-align:righ
 </style>
 
 <canvas id="cv"></canvas>
+<div id="sat" style="position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden"></div>
 
 <div class="ui" id="menu"><div class="panel">
   <h1>활 러시</h1>
@@ -50,6 +51,7 @@ dd{margin:0;color:var(--paper);font-variant-numeric:tabular-nums;text-align:righ
   <p>톡 치면 한 발. 꾹 누르면 세상이 느려집니다. 숨은 맞혀야 돌아옵니다.</p>
   <p>누른 채 조준점을 잠깐 멈추면 그 자리가 찍힙니다. 떼면 찍힌 곳마다 한 발씩 나갑니다.</p>
   <p>방은 셋입니다 — 강 · 수로 터널 · 공장 앞. 문을 지나면 화살을 셋 돌려받습니다.</p>
+  <p>연달아 맞히면 콤보가 쌓입니다. 3이면 불화살, 8 · 15면 맞힐 때마다 덤 화살이 옆의 적을 쫓아갑니다.</p>
   <button id="start">강으로 도망치기</button>
   <details><summary>개발 설정</summary>
     <label><input type="checkbox" id="optPractice"> 연습 판 (화살 무한 · 90초)</label>
@@ -87,6 +89,7 @@ const C={eye:1.6,fov:62,fovDrawn:46,horizon:.42,
   markDwell:.12,markStill:12, // 스치면 안 찍힌다 — 조준점이 0.12초 동안 12px 안에 머물러야 찍힌다
   roomLen:240,roomGap:60,roomBonus:3, // 방 하나 240m, 방 사이 틈 60m. 문을 지나면 화살 +3
   swarmFlight:2.2,swarmMax:5,         // 수로 터널의 드론 떼 — 날아오는 시간 · 공중에 5개까지
+  bonusAt:[8,15],bonusGap:.07, // 콤보 8 · 15 부터 맞힌 한 발마다 덤 추적 화살 1 · 2발 — 값 없음 · 불은 안 붙는다
   practiceTime:90};
 // 방(구간) — 거리로 나뉘고 셋이 돈다. 방마다 나오는 것(kind) · 강가 모양(wall: 0 숲 · 1 터널 벽 · 2 공장 굴뚝) · 별 밝기 · 색([r,g,b])이 다르다
 const ROOMS=[
@@ -103,14 +106,14 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const hash=n=>{const s=Math.sin(n*127.1)*43758.5453;return s-Math.floor(s)};
 const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
-let W=0,H=0,DPR=1,F=600,HY=300,OX=0,OY=0,fov=C.fov,focus=0,S=null,sky,water,logLine=''; // OX · OY: 확대 중심을 조준점으로 옮긴 만큼 — 세계 그림만 옮긴다
+let W=0,H=0,DPR=1,F=600,HY=300,SAT=0,OX=0,OY=0,fov=C.fov,focus=0,S=null,sky,water,logLine=''; // OX · OY: 확대 중심을 조준점으로 옮긴 만큼 — 세계 그림만 옮긴다
 const say=text=>{S.banner={text,t:0}}; // 화면 가운데 크게 한마디
 const aim={x:0,y:0,down:false,id:-1,held:0,lx:0,ly:0,cue:false,marks:[],sx:0,sy:0,still:0}; // sx · sy · still: 조준점이 멈춘 자리와 멈춰 있던 시간
 // 로봇의 어디를 맞혔나 — 발에서 잰 높이와 옆으로 벗어난 거리로 가른다
 const zoneOf=(lx,ly)=>{const b=ly/C.foeScale,a=Math.abs(lx)/C.foeScale;return b>=1.36?'head':b<.72?'knee':a>.2?'arm':'belly'};
 
 function resize(){
-  DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth||innerWidth;H=cv.clientHeight||innerHeight;
+  DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth||innerWidth;H=cv.clientHeight||innerHeight;SAT=$('sat').offsetHeight; // SAT: 폰 위쪽 노치 · 상태 표시줄 높이
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);HY=H*C.horizon;F=(H/2)/Math.tan(fov*Math.PI/360);
   if(!aim.x){aim.x=W/2;aim.y=HY-H*.04}
   aim.x=clamp(aim.x,8,W-8);aim.y=clamp(aim.y,8,H*.8);
@@ -166,7 +169,7 @@ function newRun(opt){
   S={opt,t:0,camZ:(opt.room||0)*SEG,roomN:opt.room||0,speed:opt.idle?6:(opt.slow?C.speed0-2:C.speed0),arrows:C.arrows0,breath:1,streak:0,banner:opt.idle?null:{text:ROOMS[opt.room||0].name,t:0},danger:0,
      boats:[],foes:[],bodies:[],missiles:[],spawnT:.4,tossT:0,parts:[],gains:[],pending:[],flights:[],
      shots:0,hitShots:0,multiShots:0,chain:[0,0,0,0,0],first2:null,kills:0,downs:0,hurts:0,
-     shake:0,flash:0,slowT:0,freeze:0,over:false,drumT:0,beat:0};
+     shake:0,flash:0,slowT:0,freeze:0,over:false,drumT:0,beat:0,best:0,cbT:1,broke:null};
   aim.down=false;aim.marks=[];creak(0);
 }
 // 쏘는 것은 둘: 로봇(k:'F', 발이 y) 과 날아오는 드론(k:'M', 가운데가 y)
@@ -224,25 +227,42 @@ function aimPoint(){
   }
   return[x,y];
 }
-// 화살 한 발을 화면 점 (sx, sy) 로 쏜다. 맞힌 수를 돌려준다
-function loose(sx,sy,p){
-  if(!S.opt.practice){if(S.arrows<=0){sfx.dry();return 0}S.arrows--}
-  const gold=p>=1,hits=cast(sx,sy,gold,p),n=hits.length,hot=S.streak>=C.fireAt,bl=hits.block;
-  S.shots++;S.chain[n]++;if(n)S.hitShots++;if(n>=2){S.multiShots++;if(S.first2===null)S.first2=S.t}
-  if(!n){if(hot)sfx.dry();S.streak=0}else if(++S.streak===C.fireAt){say('불화살!');sfx.full()} // 빗나가면 불이 꺼진다
-  if(bl)S.pending.push({at:S.t+bl.z/C.arrowSpeed,clang:bl}); // 방패에 막혔다 — 화살만 잃는다
-  hits.forEach((h,i)=>{h.o.claimed=true;S.pending.push({at:S.t+h.z/C.arrowSpeed,o:h.o,lx:h.lx,ly:h.ly,i,n,last:i===n-1,hot})});
+// 콤보 — 연달아 맞힌 발 수. 빗나감 · 방패에 막힘 · 맞음이면 끊긴다(끊긴 수는 잠깐 보여 준다)
+const extraOf=n=>C.bonusAt.filter(v=>n>=v).length; // 이 콤보에서 받는 덤 화살 수
+function breakCombo(){if(S.streak>=2)S.broke={n:S.streak,t:0};S.streak=0}
+// 화살 한 발을 화면 점 (sx, sy) 로 쏜다. 맞힌 것들을 돌려준다
+// o.free: 값을 안 뺀다(콤보로 받은 찍어 쏘기 덤) · o.bonus: 덤 추적 화살 k번째 — 값 · 기록 · 콤보 · 불과 상관없고 k × 0.07초 뒤따른다
+function loose(sx,sy,p,o={}){
+  const bonus=o.bonus||0,d=bonus*C.bonusGap;
+  if(!S.opt.practice&&!o.free&&!bonus){if(S.arrows<=0){sfx.dry();return[]}S.arrows--}
+  const gold=p>=1,hits=cast(sx,sy,gold,p),n=hits.length,hot=!bonus&&S.streak>=C.fireAt,bl=hits.block;
+  if(!bonus){
+    S.shots++;S.chain[n]++;if(n)S.hitShots++;if(n>=2){S.multiShots++;if(S.first2===null)S.first2=S.t}
+    if(!n){if(hot)sfx.dry();breakCombo()} // 빗나가면 불이 꺼진다
+    else{S.best=Math.max(S.best,++S.streak);S.cbT=0;
+      if(S.streak===C.fireAt){say('불화살!');sfx.full()}else if(C.bonusAt.includes(S.streak)){say('덤 화살 +'+extraOf(S.streak));sfx.full()}}
+  }
+  if(bl)S.pending.push({at:S.t+d+bl.z/C.arrowSpeed,clang:bl}); // 방패에 막혔다 — 화살만 잃는다
+  hits.forEach((h,i)=>{h.o.claimed=true;S.pending.push({at:S.t+d+h.z/C.arrowSpeed,o:h.o,lx:h.lx,ly:h.ly,i,n,last:i===n-1,hot})});
   S.pending.sort((a,b)=>a.at-b.at);
-  S.flights.push({dx:(sx-W/2-OX)/F,dy:-(sy-HY-OY)/F,z0:S.camZ,t0:S.t,gold,hot,miss:!n&&!bl,end:bl?bl.z:n?hits[n-1].z:(gold?90:C.weakRange+p*C.weakRangePerPower)});
-  sfx.shoot(p);return n;
+  S.flights.push({dx:(sx-W/2-OX)/F,dy:-(sy-HY-OY)/F,z0:S.camZ,t0:S.t+d,gold,hot,bonus:!!bonus,miss:!n&&!bl,end:bl?bl.z:n?hits[n-1].z:(gold?90:C.weakRange+p*C.weakRangePerPower)});
+  if(!bonus)sfx.shoot(p);return hits;
+}
+// 덤 추적 화살 — 맞힌 자리(h) 둘레의 아직 안 노린 표적으로 ex 발. 내가 로봇의 머리를 맞혔으면 덤도 머리로 간다
+function bonus(h,ex){
+  const at=P(h.o.x,mid(h.o),h.z),reach=C.weakRange+C.weakRangePerPower;
+  [...S.foes,...S.missiles].filter(o=>o.alive&&!o.claimed&&o.z-S.camZ>2&&o.z-S.camZ<reach)
+    .map(o=>{const q=P(o.x,mid(o),o.z-S.camZ);return{o,d:Math.hypot(q[0]-at[0],q[1]-at[1])}})
+    .sort((a,b)=>a.d-b.d).slice(0,ex)
+    .forEach(({o},k)=>{const z=o.z-S.camZ,s=o.k==='F'&&h.o.k==='F'?P(o.x+h.lx,o.y+h.ly,z):P(o.x,mid(o),z);loose(s[0],s[1],.999,{bonus:k+1})});
 }
 function fire(){
-  const p=Math.min(1,aim.held/C.fullDraw),marks=aim.marks.filter(m=>m.o.alive&&!m.o.claimed&&m.o.z-S.camZ>.8);
+  const p=Math.min(1,aim.held/C.fullDraw),marks=aim.marks.filter(m=>m.o.alive&&!m.o.claimed&&m.o.z-S.camZ>.8),ex=extraOf(S.streak); // ex: 이번 발사 전까지 쌓인 콤보로 받는 덤
   aim.marks=[];
   if(aim.held<C.minDraw)return;
-  if(marks.length<2){const a=aimPoint();loose(a[0],a[1],p);return} // 찍힌 게 하나뿐이면 조준점 그대로 한 발
-  let got=0; // 찍어 둔 표적마다 한 발씩 — 몰려올 때 쓰는 손. 찍은 자리(머리 · 무릎 …)로 날아간다
-  for(const m of marks){const s=P(m.o.x+m.lx,m.o.y+m.ly,m.o.z-S.camZ);if(loose(s[0],s[1],p>=1?1:.999))got++}
+  if(marks.length<2){const a=aimPoint(),h=loose(a[0],a[1],p);if(h.length&&ex)bonus(h[0],ex);return} // 찍힌 게 하나뿐이면 조준점 그대로 한 발 — 맞히면 덤이 따라간다
+  let got=0; // 찍어 둔 표적마다 한 발씩 — 몰려올 때 쓰는 손. 찍은 자리(머리 · 무릎 …)로 날아간다. 덤 수만큼은 값을 안 뺀다
+  marks.forEach((m,i)=>{const s=P(m.o.x+m.lx,m.o.y+m.ly,m.o.z-S.camZ);if(loose(s[0],s[1],p>=1?1:.999,{free:i<ex}).length)got++});
   if(got>=2)say(got+'연사!');
 }
 function mark(a){ // 조준점이 멈춘 자리를 찍는다. 이미 찍힌 표적이면 자리만 옮긴다 — 몸에 찍혔어도 머리에 다시 멈추면 머리가 된다
@@ -284,7 +304,7 @@ function land(q){ // 화살이 닿았다
   if(q.last&&q.n>=3)S.slowT=.25;                            // 3꿰기부터 느려진다
 }
 function hurt(cost){ // 드론에 맞았거나 로봇에게 받혔다
-  S.hurts++;S.streak=0;
+  S.hurts++;breakCombo();
   if(S.opt.practice){S.shake=.15;sfx.thud();return} // 연습 판은 맞아도 잃는 게 없다
   sfx.crash();vib([40,30,60]);S.shake=.5;S.flash=.8;S.slowT=.25;
   if(S.arrows<=0)return end();        // 빈 화살통으로 맞으면 끝
@@ -343,6 +363,7 @@ function fx(dt){ // 판이 끝난 뒤에도 흐르는 것
   S.gains=S.gains.filter(q=>q.t<1);
   S.shake=Math.max(0,S.shake-dt);S.flash=Math.max(0,S.flash-dt*1.5);
   if(S.banner&&(S.banner.t+=dt)>.9)S.banner=null;
+  S.cbT+=dt;if(S.broke&&(S.broke.t+=dt)>.9)S.broke=null;
 }
 
 // ── 그리기
@@ -466,8 +487,8 @@ function draw(){
     const tt=S.t-a.t0,d1=Math.min(tt*C.arrowSpeed,a.end),d0=Math.max(1.5,d1-4);if(d1<1.6)continue;
     const drop=a.miss&&!a.gold?8*tt*tt:0; // 덜 당긴 화살은 처진다
     const pt=d=>P(a.dx*d,C.eye+a.dy*d-.45*Math.max(0,1-d/12)-drop,Math.max(.5,a.z0+d-S.camZ)),A=pt(d0),B=pt(d1);
-    const col=a.hot?'#FF7A3C':a.gold?'#FFD45A':'#D9D2C0';
-    g.strokeStyle=col;g.lineWidth=a.gold||a.hot?3.5:2;if(a.gold||a.hot){g.shadowColor=col;g.shadowBlur=12}
+    const col=a.hot?'#FF7A3C':a.gold?'#FFD45A':a.bonus?'#FFF0B0':'#D9D2C0',lit=a.gold||a.hot||a.bonus; // 덤 화살은 옅은 금빛
+    g.strokeStyle=col;g.lineWidth=a.gold||a.hot?3.5:a.bonus?2.5:2;if(lit){g.shadowColor=col;g.shadowBlur=12}
     g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke();g.shadowBlur=0;
   }
   // 조각 · 물보라 · 불씨 · 번쩍
@@ -505,6 +526,16 @@ function draw(){
   g.strokeStyle='#FFD45A';g.lineWidth=2.5; // 돌아오는 화살
   for(const q of S.gains){if(q.t<0)continue;const e=q.t*q.t*(3-2*q.t),e0=Math.max(0,e-.12);
     g.beginPath();g.moveTo(q.x+(qx-q.x)*e0,q.y+(qy-q.y)*e0);g.lineTo(q.x+(qx-q.x)*e,q.y+(qy-q.y)*e);g.stroke()}
+  { // 콤보 — 위 가운데에 숫자 · 지금 받는 것 · 다음 단계까지 칸. 끊기면 붉게 「끊김」
+    const cb=S.streak,y=SAT+48,steps=[C.fireAt,...C.bonusAt],font=px=>`${px}px Jua, 'Malgun Gothic', sans-serif`;
+    g.textAlign='center';
+    if(cb>0){
+      const lo=[0,...steps].filter(v=>v<=cb).pop(),hi=steps.find(v=>v>cb),ex=extraOf(cb),col=ex?'#FFD45A':cb>=C.fireAt?'#FF7A3C':'#F3EBDD';
+      g.fillStyle=col;g.font=font(Math.round(30*(1+.35*Math.max(0,1-S.cbT/.15))));g.fillText(cb,W/2,y);
+      g.font=font(13);g.fillText(cb<C.fireAt?'콤보':ex?`불화살 · 덤 +${ex}`:'불화살',W/2,y+18);
+      if(hi){const k=hi-lo,w=Math.min(12,140/k);for(let i=0;i<k;i++){g.globalAlpha=i<cb-lo?1:.3;g.fillRect(W/2+(i-(k-1)/2)*w-w*.3,y+26,w*.6,4)}g.globalAlpha=1}
+    }else if(S.broke){const a=Math.max(0,1-S.broke.t/.9);g.fillStyle=`rgba(224,71,58,${a})`;g.font=font(30);g.fillText(S.broke.n,W/2,y);g.font=font(13);g.fillText('끊김',W/2,y+18)}
+  }
   if(S.banner){const b=S.banner,sc=1+.6*Math.max(0,1-b.t/.12); // 꿰기 · 연쇄 · 불화살 한마디
     g.font=`${Math.round(46*sc)}px Jua, 'Malgun Gothic', sans-serif`;g.textAlign='center';g.fillStyle=`rgba(255,212,90,${Math.max(0,1-b.t/.9)})`;
     g.shadowColor='#FF7A3C';g.shadowBlur=20;g.fillText(b.text,W/2,H*.27);g.shadowBlur=0}
@@ -517,9 +548,9 @@ function showResult(){
   $('rDist').textContent=d;
   $('rBest').textContent=s.opt.practice?'연습 판':r0?`${r0+1}번 방부터 — 기록은 1번 방부터만 잰다`:!best?'첫 기록':d>best?`새 기록 · 앞선 최고 ${best} m`:`최고 ${best} m`;
   $('rStats').innerHTML=[['버틴 시간',s.t.toFixed(1)+'초'],['닿은 방',`${s.roomN+1}번째 · ${ROOMS[s.roomN%ROOMS.length].name}`],['쓰러뜨린 로봇',s.kills],['떨어뜨린 드론',s.downs],['쏜 화살',s.shots],['명중률',pct(s.hitShots,s.shots)],
-    ['꿰기 2 · 3 · 4',`${s.chain[2]} · ${s.chain[3]} · ${s.chain[4]}`],['첫 2꿰기',f2],['맞은 횟수',s.hurts]]
+    ['꿰기 2 · 3 · 4',`${s.chain[2]} · ${s.chain[3]} · ${s.chain[4]}`],['첫 2꿰기',f2],['최고 콤보',s.best],['맞은 횟수',s.hurts]]
     .map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
-  logLine=`활러시 web7 방 |끌기 ${+$('optDrag').checked} | ${s.opt.practice?'연습':'본판'} | 방 ${r0+1}→${s.roomN+1} | 거리 ${d}m | ${s.t.toFixed(1)}초 | 로봇 ${s.kills} 드론 ${s.downs} | 발사 ${s.shots} | 명중 ${pct(s.hitShots,s.shots)} | 꿰기 1·2·3·4 = ${s.chain.slice(1).join('·')} | 첫2꿰기 ${f2} | 맞음 ${s.hurts} | 보조 ${+!!s.opt.assist} 느림 ${+!!s.opt.slow} | ${W}x${H}`;
+  logLine=`활러시 web8 콤보 |끌기 ${+$('optDrag').checked} | ${s.opt.practice?'연습':'본판'} | 방 ${r0+1}→${s.roomN+1} | 거리 ${d}m | ${s.t.toFixed(1)}초 | 로봇 ${s.kills} 드론 ${s.downs} | 발사 ${s.shots} | 명중 ${pct(s.hitShots,s.shots)} | 꿰기 1·2·3·4 = ${s.chain.slice(1).join('·')} | 첫2꿰기 ${f2} | 최고콤보 ${s.best} | 맞음 ${s.hurts} | 보조 ${+!!s.opt.assist} 느림 ${+!!s.opt.slow} | ${W}x${H}`;
   $('rLog').textContent=logLine;$('copy').textContent='기록 복사';$('result').hidden=false;
 }
 function start(){
@@ -580,6 +611,15 @@ function selfTest(){
     shoot(0,1.6,15,1);ok(sh.alive&&back.alive&&S.kills===0&&S.arrows===4,'방패 로봇의 몸을 쏘면 막힌다 — 금빛 화살도 뒤까지 못 간다');
     shoot(0,2.4,15,.1);ok(!sh.alive&&back.alive&&S.kills===1,'방패 로봇은 머리를 쏘면 쓰러진다')}
   S.camZ=SEG-40;{const f=foe(0,.3,S.camZ+10,0);f.shield=true;drawFoe(f,10);drawBoat({x:0,z:S.camZ+9,vz:0,len:1.6,w:1.7});drawGate(SEG)} // 방패 · 너벅선 · 문이 오류 없이 그려진다
+  newRun({});S.camZ=100;S.arrows=5;S.streak=8;S.foes=[foe(0,.3,115,0),foe(2,.3,115,0),foe(-7,.3,140,0)];shoot(0,2.4,15,.1);
+  ok(S.kills===2&&S.bodies.every(b=>b.dead.zone==='head')&&S.foes[2].alive&&S.arrows===6&&S.shots===1&&S.streak===9,'콤보 8 이면 맞힌 한 발에 덤 화살 하나가 옆 로봇의 같은 자리(머리)로 — 값 없음 · 기록 · 콤보에 안 들어간다');
+  newRun({});S.camZ=100;S.streak=8;{const a=foe(0,.3,115,0),b=foe(1.15,.3,115,0);a.shield=b.shield=true;S.foes=[a,b];
+    shoot(0,1.6,15,.1);ok(S.kills===0&&S.streak===0&&S.broke.n===8,'방패 몸에 막히면 덤도 없고 콤보가 끊긴다 — 끊긴 수를 남긴다');
+    S.streak=8;shoot(0,2.4,15,.1);ok(S.kills===2,'방패 로봇의 머리를 맞히면 덤이 옆 방패 로봇의 머리로 간다')}
+  newRun({});S.camZ=100;S.arrows=5;S.streak=8;S.foes=[foe(-2,.3,115,0),foe(0,.3,115,0),foe(2,.3,115,0)];
+  aim.marks=S.foes.map(o=>({o,lx:0,ly:2.1}));aim.held=.3;aim.down=true;fire();aim.down=false;S.t+=1;while(S.pending.length)land(S.pending.shift());
+  ok(S.kills===3&&S.arrows===6&&S.streak===11&&S.best===11,'콤보 8 이면 찍어 쏜 화살 중 하나는 값을 안 뺀다');
+  S.streak=16;draw();S.streak=0;S.broke={n:16,t:.3};draw(); // 콤보 표시 · 끊김이 오류 없이 그려진다
   {aim.x=W*.85;aim.y=H*.25;const q=P(0,C.eye,1e6),wx=(aim.x-q[0])/F*1e6,wy=C.eye-(aim.y-q[1])/F*1e6; // 조준점 밑의 아주 먼 점
     for(let i=0;i<40;i++)zoom(C.fovDrawn,1/60);const a=P(wx,wy,1e6);
     ok(fov<C.fov-10&&Math.hypot(a[0]-aim.x,a[1]-aim.y)<.5,'확대해도 조준점 밑의 것이 밀려나지 않는다');
