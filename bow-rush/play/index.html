@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex"><!-- 웹 빌드(kangjufam.github.io/bow-rush/play/)는 사람 테스트용 — 검색 제외 -->
+<title>활 러시</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&display=swap">
+<style>
+/* 화면 전체가 밤 강(캔버스). 글은 가운데 패널 한 장에만 둔다 */
+:root{
+  --night:#1B2347; --river:#0E1630; --ink:#070B1A;
+  --lantern:#FFB36B; --knot:#E0473A; --gold:#FFD45A; --paper:#F3EBDD; --dim:#9AA3C7;
+  --display:'Jua','Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+  --body:system-ui,'Malgun Gothic','Apple SD Gothic Neo',sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--river);color:var(--paper);font-family:var(--body);font-size:15px;line-height:1.5;word-break:keep-all;overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.ui{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.panel{pointer-events:auto;box-sizing:border-box;width:min(320px,100%);max-height:100%;overflow:auto;background:rgba(7,11,26,.84);border:1px solid rgba(255,179,107,.28);border-radius:6px;padding:26px 22px 20px;display:flex;flex-direction:column;gap:14px;text-align:center}
+h1{font:400 40px/1.1 var(--display);margin:0;color:var(--lantern);text-wrap:balance}
+p{margin:0}
+.red{color:var(--knot)}
+.eyebrow{color:var(--dim);font-size:12px;letter-spacing:.14em}
+.big{font:400 56px/1 var(--display);color:var(--gold);font-variant-numeric:tabular-nums}
+.big small{font-size:22px;color:var(--paper)}
+.best{color:var(--dim);font-size:13px}
+button{font:400 20px/1 var(--display);padding:14px;border:0;border-radius:4px;background:var(--gold);color:var(--ink);cursor:pointer}
+button.ghost{background:transparent;color:var(--dim);font:13px var(--body);padding:8px;text-decoration:underline}
+button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+details{text-align:left;color:var(--dim);font-size:13px}
+summary{cursor:pointer}
+details label{display:flex;gap:8px;align-items:center;padding:6px 0;color:var(--paper)}
+dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:4px 12px;text-align:left;font-size:13px;color:var(--dim);border-top:1px solid rgba(154,163,199,.25);padding-top:12px}
+dd{margin:0;color:var(--paper);font-variant-numeric:tabular-nums;text-align:right}
+.row{display:flex;justify-content:center;gap:8px}
+.log{font-size:11px;color:var(--dim);text-align:left;overflow-wrap:anywhere;-webkit-user-select:text;user-select:text}
+</style>
+
+<canvas id="cv"></canvas>
+
+<div class="ui" id="menu"><div class="panel">
+  <h1>활 러시</h1>
+  <p>활밖에 모르는 내가 로봇들에게서 도망친다.</p>
+  <p><span class="red">붉은 눈</span>의 로봇과, 날아오는 <span class="red">붉은 드론</span>을 쏘세요. 방패 든 로봇은 머리만 뚫립니다.</p>
+  <p>톡 치면 한 발. 꾹 누르면 세상이 느려집니다. 숨은 맞혀야 돌아옵니다.</p>
+  <p>누른 채 조준점을 잠깐 멈추면 그 자리가 찍힙니다. 떼면 찍힌 곳마다 한 발씩 나갑니다.</p>
+  <p>방은 셋입니다 — 강 · 수로 터널 · 공장 앞. 문을 지나면 화살을 셋 돌려받습니다.</p>
+  <button id="start">강으로 도망치기</button>
+  <details><summary>개발 설정</summary>
+    <label><input type="checkbox" id="optPractice"> 연습 판 (화살 무한 · 90초)</label>
+    <label><input type="checkbox" id="optDrag"> 끌어 조준 (1차 방식)</label>
+    <label><input type="checkbox" id="optAssist"> 조준 보조</label>
+    <label><input type="checkbox" id="optSlow"> 느리게 시작 (8 m/s)</label>
+    <label>시작 방 <select id="optRoom"><option value="0">1 · 강</option><option value="1">2 · 수로 터널</option><option value="2">3 · 공장 앞</option></select></label>
+  </details>
+</div></div>
+
+<div class="ui" id="result" hidden><div class="panel">
+  <p class="eyebrow">내려간 거리</p>
+  <p class="big"><span id="rDist">0</span><small> m</small></p>
+  <p class="best" id="rBest"></p>
+  <button id="again">한 판 더</button>
+  <dl id="rStats"></dl>
+  <p class="log" id="rLog"></p>
+  <div class="row"><button class="ghost" id="copy">기록 복사</button><button class="ghost" id="toMenu">설정으로</button></div>
+</div></div>
+
+<script>
+(()=>{'use strict';
+// 수치 — 전부 제안값. 프로토에서 여기를 고쳐 맞춘다
+const C={eye:1.6,fov:62,fovDrawn:46,horizon:.42,
+  speed0:10,speedStep:1.5,speedMax:19,speedEvery:20,
+  fullDraw:.6,minDraw:.06,wobbleAfter:1.2,wobbleRamp:.6,wobblePx:16,sens:1.15,aimLift:.12,
+  focusScale:.35,breathUse:1.6,breathHit:.25, // 꾹 누르면 세상이 느려진다(집중). 숨은 1.6초 버티고, 맞힐 때마다 1/4 씩만 돌아온다 — 시간으로는 안 찬다
+  fireAt:3,blast:2.2,                         // 연달아 3번 맞히면 불화살 — 맞은 자리 둘레가 이어서 터진다
+  arrowSpeed:70,pierceMax:4,weakRange:26,weakRangePerPower:20,
+  arrows0:12,arrowsMax:24,hitCost:2,slashCost:3, // 드론에 맞으면 -2, 살아 있는 로봇 옆을 지나면 -3
+  spawnAt:45,spawnEvery:2.4,spawnEveryMin:1,boatDrift:.35, // 순찰정은 내 빠르기의 1/3 쯤으로 같이 떠내려간다
+  foeScale:1.3,throwRange:40,throwEvery:2.6,flight:1.9,flightMin:1.2,windup:.5,
+  tossGap:.7,tossMax:3, // 한꺼번에 날리지 않는다 — 0.7초 간격, 공중에 3개까지
+  marksMax:4,           // 꾹 누른 채 조준점을 멈추면 그 자리가 찍힌다(4개까지). 떼면 찍힌 곳마다 한 발씩 나간다
+  markDwell:.12,markStill:12, // 스치면 안 찍힌다 — 조준점이 0.12초 동안 12px 안에 머물러야 찍힌다
+  roomLen:240,roomGap:60,roomBonus:3, // 방 하나 240m, 방 사이 틈 60m. 문을 지나면 화살 +3
+  swarmFlight:2.2,swarmMax:5,         // 수로 터널의 드론 떼 — 날아오는 시간 · 공중에 5개까지
+  practiceTime:90};
+// 방(구간) — 거리로 나뉘고 셋이 돈다. 방마다 나오는 것(kind) · 강가 모양(wall: 0 숲 · 1 터널 벽 · 2 공장 굴뚝) · 별 밝기 · 색([r,g,b])이 다르다
+const ROOMS=[
+  {name:'강',kind:'boat',wall:0,stars:1,sky0:[27,35,71],sky1:[43,55,105],w0:[22,32,74],w1:[14,22,48],w2:[7,11,26],bank:[7,11,26]},
+  {name:'수로 터널',kind:'swarm',wall:1,stars:0,sky0:[6,20,24],sky1:[14,44,50],w0:[12,40,46],w1:[7,24,28],w2:[3,10,12],bank:[3,9,11]},
+  {name:'공장 앞',kind:'shield',wall:2,stars:.35,sky0:[34,24,48],sky1:[84,58,78],w0:[44,32,60],w1:[24,17,38],w2:[10,7,18],bank:[11,7,16]}];
+const SEG=C.roomLen+C.roomGap;
+// 세계 거리 z 가 몇째 구간(n) · 어느 방(i)인가. 방 끝의 틈이면 gap, t 는 틈을 지난 비율 — 다음 방 색으로 번지는 데 쓴다
+const roomAt=z=>{const n=Math.floor(z/SEG),into=z-n*SEG,gap=into>C.roomLen;return{n,i:(n%ROOMS.length+ROOMS.length)%ROOMS.length,gap,t:gap?(into-C.roomLen)/C.roomGap:0}};
+const mix=(a,b,t)=>`rgb(${a.map((v,i)=>Math.round(v+(b[i]-v)*t))})`;
+const $=id=>document.getElementById(id);
+const cv=$('cv'),g=cv.getContext('2d');
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const hash=n=>{const s=Math.sin(n*127.1)*43758.5453;return s-Math.floor(s)};
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const vib=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+let W=0,H=0,DPR=1,F=600,HY=300,OX=0,OY=0,fov=C.fov,focus=0,S=null,sky,water,logLine=''; // OX · OY: 확대 중심을 조준점으로 옮긴 만큼 — 세계 그림만 옮긴다
+const say=text=>{S.banner={text,t:0}}; // 화면 가운데 크게 한마디
+const aim={x:0,y:0,down:false,id:-1,held:0,lx:0,ly:0,cue:false,marks:[],sx:0,sy:0,still:0}; // sx · sy · still: 조준점이 멈춘 자리와 멈춰 있던 시간
+// 로봇의 어디를 맞혔나 — 발에서 잰 높이와 옆으로 벗어난 거리로 가른다
+const zoneOf=(lx,ly)=>{const b=ly/C.foeScale,a=Math.abs(lx)/C.foeScale;return b>=1.36?'head':b<.72?'knee':a>.2?'arm':'belly'};
+
+function resize(){
+  DPR=Math.min(2,window.devicePixelRatio||1);W=cv.clientWidth||innerWidth;H=cv.clientHeight||innerHeight;
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);HY=H*C.horizon;F=(H/2)/Math.tan(fov*Math.PI/360);
+  if(!aim.x){aim.x=W/2;aim.y=HY-H*.04}
+  aim.x=clamp(aim.x,8,W-8);aim.y=clamp(aim.y,8,H*.8);
+}
+// 빛무리 — 덧그려 쓴다. glow: 맞았을 때 번쩍 · glowR: 붉은 것(쏴야 한다) · glowC: 순찰정 등(쏘는 것이 아니다)
+const mkGlow=rgb=>{const cvs=document.createElement('canvas');cvs.width=cvs.height=128;
+  const c=cvs.getContext('2d'),r=c.createRadialGradient(64,64,0,64,64,64);
+  r.addColorStop(0,`rgba(${rgb},.6)`);r.addColorStop(.25,`rgba(${rgb},.32)`);r.addColorStop(1,`rgba(${rgb},0)`);
+  c.fillStyle=r;c.fillRect(0,0,128,128);return cvs};
+const glow=mkGlow('255,190,120'),glowR=mkGlow('255,84,64'),glowC=mkGlow('120,220,255');
+// 확대는 조준점을 중심으로 — 꾹 누르는 동안 표적이 조준점 밑에서 밀려나지 않는다. 풀릴 때는 화면 가운데로 돌아온다
+function zoom(want,rdt){
+  const F1=F,F0=(H/2)/Math.tan(C.fov*Math.PI/360);
+  fov+=(want-fov)*Math.min(1,rdt*10);F=(H/2)/Math.tan(fov*Math.PI/360);
+  if(F>=F1){const k=F/F1,ax=aim.x-W/2,ay=aim.y-HY;OX=ax-(ax-OX)*k;OY=ay-(ay-OY)*k}
+  else{const s=F1>F0+1e-6?Math.max(0,(F-F0)/(F1-F0)):0;OX*=s;OY*=s}
+}
+// 카메라 기준 (x, y, 앞 거리 z) → 화면
+const P=(x,y,z)=>{const k=F/z;return[W/2+OX+x*k,HY+OY-(y-C.eye)*k,k]};
+
+// ── 소리 (코드 합성)
+let AC=null,master=null,cr=null;
+function audioInit(){if(AC)return;try{AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.5;master.connect(AC.destination)}catch(e){AC=null}}
+function tone(freq,dur,type,vol,slide,when){if(!AC)return;const t=AC.currentTime+(when||0),o=AC.createOscillator(),v=AC.createGain();
+  o.type=type||'sine';o.frequency.setValueAtTime(freq,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,freq*slide),t+dur);
+  v.gain.setValueAtTime(vol,t);v.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(v).connect(master);o.start(t);o.stop(t+dur+.02)}
+function noise(dur,vol,hp){if(!AC)return;const n=AC.sampleRate*dur|0,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);
+  for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+  const s=AC.createBufferSource(),v=AC.createGain(),fl=AC.createBiquadFilter();fl.type='highpass';fl.frequency.value=hp;s.buffer=b;v.gain.value=vol;s.connect(fl).connect(v).connect(master);s.start()}
+const SCALE=[523.25,659.25,783.99,1046.5]; // 꿸 때마다 도 → 미 → 솔 → 높은 도
+const sfx={
+  pop(i){const f=SCALE[Math.min(i,3)]*(1+(Math.random()-.5)*.02);noise(.09,.35,1200);tone(f,.5,'sine',.32);tone(f*2,.25,'sine',.08)},
+  down(i){noise(.12,.45,300);tone(320,.28,'sawtooth',.16,.3);tone(SCALE[Math.min(i,3)],.4,'sine',.22);noise(.25,.2,2500)}, // 맞고 물에 빠진다
+  toss(){noise(.12,.12,700);tone(520,.14,'sine',.08,.5)},
+  tick(n){tone(640+n*130,.06,'square',.1)}, // 표적이 찍힐 때마다 음이 오른다
+  thud(){noise(.05,.5,300);tone(180,.12,'triangle',.4,.5)},
+  full(){tone(1568,.18,'sine',.2)},
+  shoot(p){tone(220+p*160,.14,'triangle',.3,.4);noise(.05,.15,2000)},
+  crash(){noise(.3,.6,100);tone(60,.5,'sine',.7,.5)},
+  drum(strong){tone(strong?90:120,.16,'sine',strong?.45:.22,.5)},
+  low(){tone(200,.1,'triangle',.18,.7)},
+  dry(){tone(140,.08,'square',.1)},
+  clang(){tone(880,.07,'square',.1);noise(.05,.3,3000)}}; // 방패에 튕기는 소리
+function creak(p){ // 시위 당기는 소리 — 힘에 따라 음이 오른다. 0 이면 끈다
+  if(!AC)return;
+  if(!p){if(cr){cr.v.gain.setTargetAtTime(0,AC.currentTime,.02);cr.o.stop(AC.currentTime+.1);cr=null}return}
+  if(!cr){const o=AC.createOscillator(),v=AC.createGain();o.type='sawtooth';v.gain.value=.035;o.connect(v).connect(master);o.start();cr={o,v}}
+  cr.o.frequency.setTargetAtTime(70+p*130,AC.currentTime,.03);
+}
+
+// ── 판
+function newRun(opt){
+  S={opt,t:0,camZ:(opt.room||0)*SEG,roomN:opt.room||0,speed:opt.idle?6:(opt.slow?C.speed0-2:C.speed0),arrows:C.arrows0,breath:1,streak:0,banner:opt.idle?null:{text:ROOMS[opt.room||0].name,t:0},danger:0,
+     boats:[],foes:[],bodies:[],missiles:[],spawnT:.4,tossT:0,parts:[],gains:[],pending:[],flights:[],
+     shots:0,hitShots:0,multiShots:0,chain:[0,0,0,0,0],first2:null,kills:0,downs:0,hurts:0,
+     shake:0,flash:0,slowT:0,freeze:0,over:false,drumT:0,beat:0};
+  aim.down=false;aim.marks=[];creak(0);
+}
+// 쏘는 것은 둘: 로봇(k:'F', 발이 y) 과 날아오는 드론(k:'M', 가운데가 y)
+const foe=(x,y,z,vz)=>({k:'F',x,y,z,vz,alive:true,cool:.3+Math.random()*.9});
+const mid=o=>o.k==='F'?o.y+.92*C.foeScale:o.y; // 맞는 자리의 높이
+function spawn(){
+  const r=Math.random,z=S.camZ+C.spawnAt,hard=Math.min(1,S.t/60),rm=roomAt(z),kind=ROOMS[rm.i].kind;
+  if(rm.gap)return; // 방 사이 틈에는 아무것도 안 나온다 — 숨 고르는 곳
+  if(kind==='swarm'){ // 수로 터널: 로봇 없이 드론 떼만 온다 — 톡 쳐서 떨어뜨리는 방
+    if(S.missiles.length>=C.swarmMax)return;
+    for(let i=0,n=2+(r()<.4+hard*.4);i<n;i++){const x=(r()-.5)*4.4,y=1.2+r()*2;
+      S.missiles.push({k:'M',x0:x,y0:y,z0:z-5,x,y,z:z-5,t:-i*.35,T:C.swarmFlight,alive:true})} // t 가 음수면 그만큼 늦게 온다
+    sfx.toss();return;
+  }
+  if(kind==='shield'){ // 공장 앞: 방패 로봇이 너벅선에 옆으로 늘어선다 — 머리만 뚫리고, 드론은 안 날린다. 멈춰 찍는 방
+    const n=2+(r()<.3+hard*.4),x=(r()-.5)*2,vz=S.speed*C.boatDrift;
+    S.boats.push({x,z,vz,len:1.6,w:.5+n*.6});
+    for(let i=0;i<n;i++){const f=foe(x+(i-(n-1)/2)*1.15,.3,z+.8,vz);f.shield=true;f.cool=Infinity;S.foes.push(f)}
+    return;
+  }
+  if(S.t>6&&r()<.3){ // 강가 바위 위의 로봇 — 제자리에서 드론을 날린다
+    const x=(r()<.5?-1:1)*(3.4+r()*1.2),y=.6+r()*1.6;
+    S.boats.push({x,z,vz:0,len:0,rock:y});S.foes.push(foe(x,y,z,0));
+  }else{ // 순찰정 — 로봇이 한 줄로 서 있다. 꽉 당긴 화살이면 한꺼번에 꿴다
+    const x=(r()-.5)*5,vz=S.speed*C.boatDrift,n=1+(r()<.5+hard*.4)+(S.t>15&&r()<.3+hard*.3),len=1.2+n*1.3;
+    S.boats.push({x,z,vz,len});
+    for(let i=0;i<n;i++)S.foes.push(foe(x+(r()-.5)*.9,.3,z+.7+i*1.3,vz));
+  }
+}
+// 화면 점 (sx, sy) 으로 쏜 화살이 맞히는 것들, 가까운 순. 쏜 순간에 다 정해진다
+function cast(sx,sy,gold,p){
+  const dx=(sx-W/2-OX)/F,dy=-(sy-HY-OY)/F,list=[];
+  const test=(o,rx,ry)=>{const z=o.z-S.camZ;if(z<.8||z>90||o.claimed||!o.alive)return;const hx=dx*z,hy=C.eye+dy*z; // 화살이 그 거리에서 지나는 점
+    if(Math.hypot((o.x-hx)/rx,(mid(o)-hy)/ry)<=1)list.push({z,o,lx:hx-o.x,ly:hy-o.y})};
+  for(const f of S.foes)test(f,.48*C.foeScale,.88*C.foeScale);
+  for(const m of S.missiles)test(m,.6,.6);
+  list.sort((a,b)=>a.z-b.z);
+  const range=gold?90:C.weakRange+p*C.weakRangePerPower; // 금빛: 곧게 날아 여럿을 꿴다 · 덜 당김: 가까운 하나만
+  const b=list.findIndex(h=>h.o.shield&&zoneOf(h.lx,h.ly)!=='head'),block=b<0?null:list[b];
+  if(block)list.length=b; // 방패: 머리가 아니면 거기서 막힌다 — 뒤의 것도 못 맞힌다
+  const out=gold?list.slice(0,C.pierceMax):list.filter(h=>h.z<=range).slice(0,1);
+  out.block=block&&block.z<=range&&(gold?out.length<C.pierceMax:!out.length)?block:null; // 막힌 자리 — loose() 가 화살을 거기서 멈춘다
+  return out;
+}
+function aimPoint(){
+  let x=aim.x,y=aim.y;
+  if(!aim.down)return[x,y];
+  const over=aim.held-C.fullDraw-C.wobbleAfter; // 꽉 당긴 채 오래 버티면 떨린다
+  if(over>0){const a=Math.min(1,over/C.wobbleRamp)*C.wobblePx;x+=Math.sin(aim.held*9.1)*a;y+=Math.cos(aim.held*7.3)*a*.8}
+  if(S.opt.assist&&aim.held>=C.fullDraw){ // 조준 보조(토글): 금빛일 때 가장 가까운 표적 쪽으로 살짝 끌린다
+    let best=44,tx=0,ty=0;
+    for(const o of[...S.foes,...S.missiles]){const z=o.z-S.camZ;if(z<2||z>70||o.claimed||!o.alive)continue;
+      const q=P(o.x,mid(o),z),d=Math.hypot(q[0]-x,q[1]-y);if(d<best){best=d;tx=q[0];ty=q[1]}}
+    if(best<44){x+=(tx-x)*.55;y+=(ty-y)*.55}
+  }
+  return[x,y];
+}
+// 화살 한 발을 화면 점 (sx, sy) 로 쏜다. 맞힌 수를 돌려준다
+function loose(sx,sy,p){
+  if(!S.opt.practice){if(S.arrows<=0){sfx.dry();return 0}S.arrows--}
+  const gold=p>=1,hits=cast(sx,sy,gold,p),n=hits.length,hot=S.streak>=C.fireAt,bl=hits.block;
+  S.shots++;S.chain[n]++;if(n)S.hitShots++;if(n>=2){S.multiShots++;if(S.first2===null)S.first2=S.t}
+  if(!n){if(hot)sfx.dry();S.streak=0}else if(++S.streak===C.fireAt){say('불화살!');sfx.full()} // 빗나가면 불이 꺼진다
+  if(bl)S.pending.push({at:S.t+bl.z/C.arrowSpeed,clang:bl}); // 방패에 막혔다 — 화살만 잃는다
+  hits.forEach((h,i)=>{h.o.claimed=true;S.pending.push({at:S.t+h.z/C.arrowSpeed,o:h.o,lx:h.lx,ly:h.ly,i,n,last:i===n-1,hot})});
+  S.pending.sort((a,b)=>a.at-b.at);
+  S.flights.push({dx:(sx-W/2-OX)/F,dy:-(sy-HY-OY)/F,z0:S.camZ,t0:S.t,gold,hot,miss:!n&&!bl,end:bl?bl.z:n?hits[n-1].z:(gold?90:C.weakRange+p*C.weakRangePerPower)});
+  sfx.shoot(p);return n;
+}
+function fire(){
+  const p=Math.min(1,aim.held/C.fullDraw),marks=aim.marks.filter(m=>m.o.alive&&!m.o.claimed&&m.o.z-S.camZ>.8);
+  aim.marks=[];
+  if(aim.held<C.minDraw)return;
+  if(marks.length<2){const a=aimPoint();loose(a[0],a[1],p);return} // 찍힌 게 하나뿐이면 조준점 그대로 한 발
+  let got=0; // 찍어 둔 표적마다 한 발씩 — 몰려올 때 쓰는 손. 찍은 자리(머리 · 무릎 …)로 날아간다
+  for(const m of marks){const s=P(m.o.x+m.lx,m.o.y+m.ly,m.o.z-S.camZ);if(loose(s[0],s[1],p>=1?1:.999))got++}
+  if(got>=2)say(got+'연사!');
+}
+function mark(a){ // 조준점이 멈춘 자리를 찍는다. 이미 찍힌 표적이면 자리만 옮긴다 — 몸에 찍혔어도 머리에 다시 멈추면 머리가 된다
+  const h=cast(a[0],a[1],false,1)[0],m=h&&aim.marks.find(m=>m.o===h.o);
+  if(m){m.lx=h.lx;m.ly=h.ly}
+  else if(h&&aim.marks.length<C.marksMax&&(S.opt.practice||aim.marks.length<S.arrows)){aim.marks.push({o:h.o,lx:h.lx,ly:h.ly});sfx.tick(aim.marks.length)}
+}
+function burst(x,y,z,type){
+  for(let i=0;i<16;i++){const a=Math.random()*6.28,s=1+Math.random()*3.5;
+    S.parts.push({x,y,z,vx:Math.cos(a)*s*(type==='splash'?.4:1),vy:type==='splash'?2+Math.random()*4:Math.sin(a)*s+1,vz:(Math.random()-.5)*2,life:0,max:.7+Math.random()*.6,type,rot:a,vr:(Math.random()-.5)*10,size:.08+Math.random()*.1})}
+  if(type==='splash')return;
+  for(let i=0;i<5;i++)S.parts.push({x,y,z,vx:(Math.random()-.5)*.8,vy:1+Math.random()*1.5,vz:0,life:0,max:.5+Math.random()*.5,type:'spark',rot:0,vr:0,size:0});
+  S.parts.push({x,y,z,vx:0,vy:0,vz:0,life:0,max:.14,type:'flash',rot:0,vr:0,size:0});
+}
+function land(q){ // 화살이 닿았다
+  if(q.clang){const h=q.clang,o=h.o; // 방패에 튕긴다 — 불꽃만 튄다
+    for(let i=0;i<7;i++)S.parts.push({x:o.x+h.lx,y:o.y+h.ly,z:o.z-.2,vx:(Math.random()-.5)*4,vy:Math.random()*3,vz:-1-Math.random()*2,life:0,max:.25+Math.random()*.3,type:'spark',rot:0,vr:0,size:0});
+    sfx.clang();S.shake=Math.max(S.shake,.04);return}
+  const o=q.o,bot=o.k==='F',aimed=bot&&q.ly!=null,y=aimed?o.y+q.ly:mid(o);
+  o.alive=false;burst(o.x+(aimed?q.lx:0),y,o.z,'scrap');
+  S.breath=Math.min(1,S.breath+C.breathHit); // 숨은 맞혀야 돌아온다
+  if(bot){ // 맞은 자리대로 부서진다. 불화살에 휩쓸린 것은 튕겨 날아간다
+    S.kills++;o.dead={zone:aimed?zoneOf(q.lx,q.ly):'blast',side:q.lx<0?-1:1,t:0};S.bodies.push(o);sfx.down(q.i);
+  }else{S.downs++;sfx.pop(q.i)}
+  if(!S.opt.practice){ // 하나 맞히면 화살 +1, 한 화살로 둘 이상 꿰면 하나마다 +2
+    const gain=q.n>=2?2:1,s=P(o.x,y,Math.max(.6,o.z-S.camZ));
+    S.arrows=Math.min(C.arrowsMax,S.arrows+gain);
+    for(let k=0;k<gain;k++)S.gains.push({x:s[0],y:s[1],t:-k*.2});
+  }
+  if(q.hot){ // 불화살: 둘레의 것이 이어서 터진다
+    let c=0;
+    for(const t of[...S.foes,...S.missiles])if(t.alive&&!t.claimed&&Math.hypot(t.x-o.x,mid(t)-y,t.z-o.z)<=C.blast){
+      t.claimed=true;c++;S.pending.push({at:S.t+.09,o:t,i:Math.min(3,q.i+1),n:1,last:false,hot:true})}
+    if(c){S.pending.sort((a,b)=>a.at-b.at);if(c>=2)say('연쇄!')}
+  }
+  S.shake=Math.max(S.shake,.06+.03*q.i);
+  S.freeze=Math.max(S.freeze,q.n>=2?.07:.03);              // 터질 때마다 멈칫
+  if(q.last&&q.n>=2)say(q.n+'꿰기'+'!'.repeat(q.n-2));
+  if(q.last&&q.n>=3)S.slowT=.25;                            // 3꿰기부터 느려진다
+}
+function hurt(cost){ // 드론에 맞았거나 로봇에게 받혔다
+  S.hurts++;S.streak=0;
+  if(S.opt.practice){S.shake=.15;sfx.thud();return} // 연습 판은 맞아도 잃는 게 없다
+  sfx.crash();vib([40,30,60]);S.shake=.5;S.flash=.8;S.slowT=.25;
+  if(S.arrows<=0)return end();        // 빈 화살통으로 맞으면 끝
+  S.arrows=Math.max(0,S.arrows-cost);
+}
+function end(){S.over=true;aim.down=false;creak(0);setTimeout(showResult,700)}
+function update(dt){
+  S.t+=dt;
+  if(!S.opt.idle)S.speed=Math.min(S.opt.practice?C.speed0+3:C.speedMax,(S.opt.slow?C.speed0-2:C.speed0)+Math.floor(S.t/C.speedEvery)*C.speedStep);
+  S.camZ+=S.speed*dt;
+  const rn=Math.floor(S.camZ/SEG);
+  if(rn!==S.roomN){S.roomN=rn; // 문을 지났다 — 새 방이다. 화살을 조금 돌려받는다
+    if(!S.opt.idle){say(ROOMS[rn%ROOMS.length].name);sfx.full();
+      if(!S.opt.practice){S.arrows=Math.min(C.arrowsMax,S.arrows+C.roomBonus);for(let k=0;k<C.roomBonus;k++)S.gains.push({x:W/2,y:H*.3,t:-k*.15})}}}
+  if((S.spawnT-=dt)<=0){spawn();S.spawnT=Math.max(C.spawnEveryMin,C.spawnEvery-S.t*.025)}
+  while(S.pending.length&&S.pending[0].at<=S.t)land(S.pending.shift());
+  let danger=0;S.tossT-=dt;
+  for(const b of S.boats)b.z+=b.vz*dt;
+  for(const f of S.foes){
+    f.z+=f.vz*dt;const z=f.z-S.camZ;
+    if(!f.alive||f.claimed||S.opt.idle)continue;
+    if(z<1.2){f.alive=false;hurt(C.slashCost);if(S.over)return;continue} // 살아 있는 로봇 옆을 지나면 받힌다
+    danger=Math.max(danger,1-z/((S.speed-f.vz)*1.6));
+    if(z<C.throwRange&&z>7&&(f.cool-=dt)<=0&&S.tossT<=0&&S.missiles.length<C.tossMax){ // 드론을 날린다 — 날리기 직전 0.5초는 팔을 치켜든다
+      f.cool=Math.max(1.6,C.throwEvery-S.t*.012)+Math.random()*1.5;S.tossT=C.tossGap;
+      const hx=f.x+.4*C.foeScale,hy=f.y+1.85*C.foeScale; // 치켜든 손
+      S.missiles.push({k:'M',x0:hx,y0:hy,z0:f.z,x:hx,y:hy,z:f.z,t:0,T:Math.max(C.flightMin,C.flight-S.t*.008),alive:true});sfx.toss();
+    }
+  }
+  for(const m of S.missiles){ // 날린 자리에서 내 눈앞까지 포물선으로 온다
+    m.t+=dt;const u=m.t/m.T;
+    m.x=m.x0*(1-u);m.y=m.y0*(1-u)+(C.eye-.2)*u+Math.sin(u*3.1416)*1.1;m.z=m.z0*(1-u)+(S.camZ+1)*u;
+    if(u>=1){m.alive=false;if(!m.claimed){hurt(C.hitCost);if(S.over)return}}
+    else if(!m.claimed)danger=Math.max(danger,(u-.45)*1.8);
+  }
+  S.danger=clamp(danger,0,1); // 위험하면 가장자리가 붉게 뛰고 북이 두 배로 빨라진다
+  S.foes=S.foes.filter(f=>f.alive&&f.z-S.camZ>-1);
+  S.missiles=S.missiles.filter(m=>m.alive);
+  S.boats=S.boats.filter(b=>b.z+b.len-S.camZ>-2);
+  S.flights=S.flights.filter(a=>(S.t-a.t0)*C.arrowSpeed<a.end+2);
+  if(!S.opt.idle){ // 북 장단이 속도계다
+    S.drumT-=dt;
+    if(S.drumT<=0){S.drumT+=.6*10/S.speed/(S.danger>.3?2:1);sfx.drum(S.beat%4===0);if(!S.opt.practice&&S.arrows<=3&&S.beat%2)sfx.low();S.beat++}
+    if(S.opt.practice&&S.t>=C.practiceTime)end();
+  }
+}
+function fx(dt){ // 판이 끝난 뒤에도 흐르는 것
+  for(const p of S.parts){p.life+=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vy-=(p.type==='spark'?-.5:p.type==='flash'?0:p.type==='splash'?9:4)*dt;p.rot+=p.vr*dt}
+  S.parts=S.parts.filter(p=>p.life<p.max);
+  for(const b of S.bodies){const t0=b.dead.t;b.z+=b.vz*dt;b.dead.t+=dt;
+    if(b.dead.zone==='belly'&&t0<.4&&Math.random()<dt*50) // 코어를 맞으면 고꾸라지는 동안 불꽃이 튄다
+      S.parts.push({x:b.x,y:b.y+1.02*C.foeScale*Math.max(.1,1-6.4*t0*t0),z:b.z-.1,vx:(Math.random()-.5)*3,vy:.5+Math.random()*2.5,vz:-Math.random()*2,life:0,max:.25+Math.random()*.3,type:'spark',rot:0,vr:0,size:0});
+    if(t0<.55&&b.dead.t>=.55)burst(b.x,.1,b.z,'splash')} // 쓰러진 뒤 물에 빠진다
+  S.bodies=S.bodies.filter(b=>b.dead.t<1.15&&b.z-S.camZ>.8);
+  for(const q of S.gains)q.t+=dt*2.8;
+  S.gains=S.gains.filter(q=>q.t<1);
+  S.shake=Math.max(0,S.shake-dt);S.flash=Math.max(0,S.flash-dt*1.5);
+  if(S.banner&&(S.banner.t+=dt)>.9)S.banner=null;
+}
+
+// ── 그리기
+function drawBoat(b){
+  const z0=Math.max(.7,b.z-S.camZ),z1=Math.max(.8,b.z+b.len-S.camZ),quad=(a,c,d,e)=>{g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(c[0],c[1]);g.lineTo(d[0],d[1]);g.lineTo(e[0],e[1]);g.fill()};
+  if(b.rock){g.fillStyle='#2A3356';quad(P(b.x-1.2,0,z0),P(b.x+1.2,0,z0),P(b.x+.75,b.rock,z0),P(b.x-.75,b.rock,z0));return} // 강가 바위
+  const w=b.w||.8,a=P(b.x-w,.3,z0),c=P(b.x+w,.3,z0); // 너벅선(방패 로봇)은 넓다
+  g.fillStyle='#39446B';quad(a,c,P(b.x+w*.75,.3,z1),P(b.x-w*.75,.3,z1));            // 갑판
+  g.fillStyle='#20284A';g.fillRect(a[0],a[1],c[0]-a[0],P(b.x,0,z0)[1]-a[1]);  // 고물
+  const l=P(b.x,2.4,z1),r=Math.max(4,.8*l[2]); // 순찰정 등 — 밤 강에서 배가 보이게 하는 푸른 빛. 쏘는 것이 아니다
+  g.strokeStyle='#20284A';g.lineWidth=Math.max(1,.06*l[2]);g.beginPath();g.moveTo(l[0],P(b.x,.3,z1)[1]);g.lineTo(l[0],l[1]);g.stroke();
+  g.globalCompositeOperation='lighter';g.drawImage(glowC,l[0]-r,l[1]-r,r*2,r*2);g.globalCompositeOperation='source-over';
+}
+// 로봇 — 붉은 눈 · 붉은 코어. 붉은 건 쏴야 한다. 맞은 자리에 따라 다르게 부서진다
+function drawFoe(f,z){
+  const sc=C.foeScale,d=f.dead,zone=d&&d.zone,e=d?d.t:0,ease=(t,T)=>{const v=clamp(t/T,0,1);return v*v};
+  // sy: 발 금을 축으로 세로로 접는다(1 서 있음 → 0 납작 → 음수면 내 쪽으로 넘어와 발 아래로 눕는다), roll: 옆으로, 팔: 0 내림 · 1 치켜듦 · -1 떨어져 나감
+  let sy=1,sx=1,roll=0,kneel=0,lift=0,armL=0,armR=0;
+  if(d){
+    if(zone==='head'){sy=1-.78*ease(e-.15,.4);armL=armR=1}                             // 머리: 머리가 튕겨 나가고, 몸은 멈칫했다가 뒤로 넘어간다
+    else if(zone==='belly'){sy=1-1.6*ease(e,.5);sx=1+.15*ease(e,.5)}                   // 코어: 불꽃을 튀기며 앞으로(내 쪽으로) 고꾸라진다 — 불꽃은 fx 가 낸다
+    else if(zone==='knee'){kneel=ease(e,.2);sy=1-.2*ease(e-.3,.4)}                     // 무릎: 관절이 꺾여 그 자리에 주저앉는다
+    else if(zone==='arm'){roll=d.side*ease(e-.1,.5)*1.55;d.side>0?armR=-1:armL=-1}     // 팔: 맞은 팔이 떨어져 나가고 그쪽으로 기울어 쓰러진다
+    else{lift=Math.max(0,3.2*e-5*e*e);roll=d.side*e*5;sy=1-.4*ease(e,.4);armL=armR=1}  // 불화살에 휩쓸림: 돌면서 튕겨 날아간다
+  }else if(!f.claimed&&!S.opt.idle&&f.cool<C.windup&&z<C.throwRange&&z>7)armR=1;       // 드론을 날리기 직전 — 팔을 치켜든다
+  const feet=P(f.x,f.y+lift,z),u=feet[2]*sc,k=.5*u*kneel,fade=d?clamp((1.15-e)/.3,0,1):1; // k: 주저앉으면 윗몸이 내려온다
+  const lit=on=>on?'#E0473A':'#3A2433'; // 눈 · 코어 — 맞으면 꺼진다
+  const head=on=>{const w=Math.max(1.5,.2*u);g.fillStyle='#A3ADC9';g.fillRect(-w,-w*.9,w*2,w*1.8);g.fillStyle=lit(on);g.fillRect(-w*.7,-w*.4,w*1.4,Math.max(1,w*.5))}; // 네모난 머리 · 눈 띠
+  if(!d){g.globalCompositeOperation='lighter';g.fillStyle='rgba(224,71,58,.2)';g.beginPath();g.arc(feet[0],feet[1]-(f.shield?1.55:1)*u,Math.max(5,(f.shield?.45:.9)*u),0,6.29);g.fill();g.globalCompositeOperation='source-over'} // 붉은 빛 — 방패 로봇은 머리에만
+  g.save();g.translate(feet[0],feet[1]);g.rotate(roll);g.scale(sx,Math.abs(sy)<.06?.06:sy);g.globalAlpha=fade;
+  g.strokeStyle='#6A769C';g.lineCap=g.lineJoin='round';g.lineWidth=Math.max(1,.15*u);g.beginPath(); // 다리 — 무릎이 꺾이면 바깥으로 벌어진다
+  for(const sd of[-1,1]){g.moveTo(sd*.13*u,-.75*u+k);g.lineTo(sd*(.13+.36*kneel)*u,(-.75*u+k)/2);g.lineTo(sd*.13*u,0)}
+  g.stroke();
+  g.fillStyle='#A3ADC9';g.beginPath();g.moveTo(-.3*u,-.72*u+k);g.lineTo(.3*u,-.72*u+k);g.lineTo(.26*u,-1.36*u+k);g.lineTo(-.26*u,-1.36*u+k);g.fill(); // 몸통
+  g.fillStyle=lit(!d||zone==='belly'&&e<.45&&Math.random()<.5);g.beginPath();g.arc(0,-1.02*u+k,Math.max(1.5,.13*u),0,6.29);g.fill();                   // 코어 — 맞으면 깜박이다 꺼진다
+  if(zone!=='head'){g.translate(0,-1.55*u+k);head(!d);g.translate(0,1.55*u-k)}
+  g.strokeStyle='#6A769C';g.lineWidth=Math.max(1,.11*u);g.beginPath();
+  for(const[sd,a]of[[-1,armL],[1,armR]])if(a>=0){g.moveTo(sd*.28*u,-1.28*u+k);g.lineTo(sd*.44*u,(a?-1.85:-.95)*u+k)}
+  g.stroke();
+  if(f.shield){g.fillStyle='#2C375E';g.strokeStyle='#8C97B5';g.lineWidth=Math.max(1,.05*u);g.beginPath();g.rect(-.46*u,-1.33*u+k,.92*u,1.27*u);g.fill();g.stroke()} // 방패 — 머리만 내놓는다. 붉은 코어가 가려진다
+  if(armR===1&&!d){const r=Math.max(4,(.5+.5*(1-clamp(f.cool/C.windup,0,1)))*.7*u); // 손에서 드론이 켜진다
+    g.globalCompositeOperation='lighter';g.drawImage(glowR,.44*u-r,-1.9*u-r,r*2,r*2);g.globalCompositeOperation='source-over'}
+  g.restore();
+  if(zone==='head'||zone==='arm'){ // 떨어져 나간 머리 · 팔 — 몸과 따로 튕겨 날아간다
+    const hd=zone==='head';
+    g.save();g.globalAlpha=fade;g.translate(feet[0]+d.side*(hd?.8*e:.35+1.2*e)*u,feet[1]-(hd?1.55:1.1)*u-((hd?3.2:1.6)*e-4.5*e*e)*u);g.rotate(d.side*e*10);
+    if(hd)head(e<.12);else{g.strokeStyle='#6A769C';g.lineCap='round';g.lineWidth=Math.max(1,.11*u);g.beginPath();g.moveTo(0,-.22*u);g.lineTo(0,.22*u);g.stroke()}
+    g.restore();
+  }
+}
+function drawMissile(m,z){ // 드론 — 붉은 눈이 뛴다
+  const s=P(m.x,m.y,z),r=Math.max(3,.26*s[2]),gr=r*3.6;
+  g.globalCompositeOperation='lighter';g.drawImage(glowR,s[0]-gr,s[1]-gr,gr*2,gr*2);g.globalCompositeOperation='source-over';
+  g.strokeStyle='#6A769C';g.lineCap='round';g.lineWidth=Math.max(1,r*.3);g.beginPath(); // 로터 팔 둘 — 끝의 날개가 깜박인다
+  for(const sd of[-1,1]){const ex=s[0]+sd*r*1.8,ey=s[1]-r*.7,w=r*(.5+.4*Math.abs(Math.sin(S.t*40+sd)));g.moveTo(s[0],s[1]);g.lineTo(ex,ey);g.moveTo(ex-w,ey);g.lineTo(ex+w,ey)}
+  g.stroke();
+  g.fillStyle='#20284A';g.beginPath();g.arc(s[0],s[1],r,0,6.29);g.fill();
+  g.fillStyle='#E0473A';g.beginPath();g.arc(s[0],s[1],r*(.5+.1*Math.sin(S.t*20)),0,6.29);g.fill();
+}
+// 강가의 높이 — 그 자리의 방을 따른다: 숲(들쭉날쭉) · 터널 벽(높고 반듯) · 공장 굴뚝(계단)
+function bankH(zw,side){const k=ROOMS[roomAt(zw).i].wall,h=hash(zw*2.3+side);return k===1?6.6+h*.8:k===2?1.8+Math.round(h*3)*2.3:1.6+h*3.4}
+function drawGate(zw){ // 방 사이의 문 — 지나면 새 방이다. 푸른 등은 쏘는 것이 아니다
+  const z=zw-S.camZ;if(z<1.5||z>170)return;
+  const a=P(-5.8,0,z),b=P(-4.8,6.4,z),c=P(4.8,7.2,z),d=P(5.8,0,z),r=Math.max(5,1.4*a[2]);
+  g.fillStyle='#04060D';
+  g.fillRect(a[0],b[1],b[0]-a[0],a[1]-b[1]);g.fillRect(c[0],b[1],d[0]-c[0],d[1]-b[1]); // 기둥 둘
+  g.fillRect(a[0],c[1],d[0]-a[0],b[1]-c[1]);                                           // 들보
+  g.globalCompositeOperation='lighter';for(const x of[b[0],c[0]])g.drawImage(glowC,x-r,b[1]-r,r*2,r*2);g.globalCompositeOperation='source-over';
+}
+function drawBow(ax,ay,p,gold){
+  const bx=W/2,by=H*.9,span=Math.min(W*.3,150),nx=bx,ny=by+14+p*H*.05;
+  g.lineCap='round';g.strokeStyle='#8A5A3A';g.lineWidth=8;
+  g.beginPath();g.moveTo(bx-span,by+14);g.quadraticCurveTo(bx,by-52-p*10,bx+span,by+14);g.stroke();
+  g.strokeStyle='rgba(243,235,221,.75)';g.lineWidth=1.5;
+  g.beginPath();g.moveTo(bx-span,by+14);g.lineTo(nx,ny);g.lineTo(bx+span,by+14);g.stroke();
+  if(!S.opt.practice&&S.arrows<=0)return;
+  const dx=ax-nx,dy=ay-ny,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,L=H*.19;
+  const hot=S.streak>=C.fireAt,col=hot?'#FF7A3C':gold?'#FFD45A':'#D9D2C0';
+  g.strokeStyle=g.fillStyle=col;g.lineWidth=3.5;if(gold||hot){g.shadowColor=col;g.shadowBlur=hot?12+Math.random()*12:16}
+  g.beginPath();g.moveTo(nx,ny);g.lineTo(nx+ux*L,ny+uy*L);g.stroke();
+  g.beginPath();g.moveTo(nx+ux*(L+10),ny+uy*(L+10));g.lineTo(nx+ux*L-uy*5,ny+uy*L+ux*5);g.lineTo(nx+ux*L+uy*5,ny+uy*L-ux*5);g.fill();
+  g.shadowBlur=0;
+}
+function draw(){
+  g.setTransform(DPR,0,0,DPR,0,0);
+  const sh=RM?0:S.shake*36;
+  g.save();g.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
+  const rm=roomAt(S.camZ),RA=ROOMS[rm.i],RB=ROOMS[(rm.i+1)%ROOMS.length],col=k=>mix(RA[k],RB[k],rm.t); // 방 색 — 틈을 지나는 동안 다음 방 색으로 번진다
+  const hy=HY+OY; // 지평선 — 확대 중심을 따라 움직인다
+  sky=g.createLinearGradient(0,0,0,hy);sky.addColorStop(0,col('sky0'));sky.addColorStop(1,col('sky1'));
+  water=g.createLinearGradient(0,hy,0,H);water.addColorStop(0,col('w0'));water.addColorStop(.35,col('w1'));water.addColorStop(1,col('w2'));
+  g.fillStyle=sky;g.fillRect(-20,-20,W+40,hy+20);
+  g.fillStyle=water;g.fillRect(-20,hy,W+40,H-hy+20);
+  g.fillStyle='#F3EBDD';
+  for(let i=0;i<40;i++){g.globalAlpha=(.2+hash(i*3.1)*.5)*(RA.stars+(RB.stars-RA.stars)*rm.t);g.fillRect(hash(i+.5)*W,hash(i*7.7)*hy*.9,1.5,1.5)}
+  g.globalAlpha=1;
+  // 강물 결 — 세계에 붙어 있어 빠르기가 보인다
+  g.strokeStyle='rgba(154,163,199,.22)';g.lineWidth=1;g.beginPath();
+  for(let zw=Math.ceil((S.camZ+2.5)/2)*2;zw<S.camZ+90;zw+=2){const z=zw-S.camZ,x=(hash(zw)-.5)*12,a=P(x,0,z),b=P(x,0,z+1+hash(zw*1.9)*2.5);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])}
+  for(let zw=Math.ceil((S.camZ+3)/9)*9+4;zw<S.camZ+120;zw+=9){const a=P(-6.5,5.4,zw-S.camZ),b=P(6.5,5.4,zw-S.camZ);g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1])} // 머리 위로 지나가는 줄
+  g.stroke();
+  // 강가 실루엣 — 모양은 그 자리의 방을 따른다(앞의 방이 미리 보인다)
+  g.fillStyle=col('bank');
+  for(const side of[-1,1]){
+    let p=P(side*6.5,0,1.5);g.beginPath();g.moveTo(p[0],p[1]);
+    for(let zw=Math.ceil((S.camZ+1.5)/3)*3;zw<S.camZ+200;zw+=3){const h=bankH(zw,side);p=P(side*6.5,h,zw-S.camZ);g.lineTo(p[0],p[1]);
+      if(ROOMS[roomAt(zw).i].wall===2){p=P(side*6.5,h,zw+2.9-S.camZ);g.lineTo(p[0],p[1])}} // 공장은 지붕이 반듯하다 — 계단 모양
+    g.lineTo(W/2+OX,hy);g.closePath();g.fill();
+  }
+  drawGate((Math.floor(S.camZ/SEG)+1)*SEG);
+  // 순찰정 · 로봇 · 드론 — 먼 것부터
+  const items=[];
+  for(const b of S.boats){const z=b.z+b.len-S.camZ;if(z>.8&&z<170)items.push({z:z+.01,b})}
+  for(const f of[...S.foes,...S.bodies]){const z=f.z-S.camZ;if(z>.8&&z<170)items.push({z,f})}
+  for(const m of S.missiles){const z=m.z-S.camZ;if(z>.8)items.push({z,m})}
+  items.sort((a,b)=>b.z-a.z);
+  for(const it of items)it.b?drawBoat(it.b):it.f?drawFoe(it.f,it.z):drawMissile(it.m,it.z);
+  // 날아가는 화살
+  g.lineCap='round';
+  for(const a of S.flights){
+    const tt=S.t-a.t0,d1=Math.min(tt*C.arrowSpeed,a.end),d0=Math.max(1.5,d1-4);if(d1<1.6)continue;
+    const drop=a.miss&&!a.gold?8*tt*tt:0; // 덜 당긴 화살은 처진다
+    const pt=d=>P(a.dx*d,C.eye+a.dy*d-.45*Math.max(0,1-d/12)-drop,Math.max(.5,a.z0+d-S.camZ)),A=pt(d0),B=pt(d1);
+    const col=a.hot?'#FF7A3C':a.gold?'#FFD45A':'#D9D2C0';
+    g.strokeStyle=col;g.lineWidth=a.gold||a.hot?3.5:2;if(a.gold||a.hot){g.shadowColor=col;g.shadowBlur=12}
+    g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke();g.shadowBlur=0;
+  }
+  // 조각 · 물보라 · 불씨 · 번쩍
+  for(const p of S.parts){
+    const z=p.z-S.camZ;if(z<.4)continue;
+    const s=P(p.x,p.y,z),a=1-p.life/p.max;
+    if(p.type==='flash'){const r=s[2]*2.4;g.globalCompositeOperation='lighter';g.globalAlpha=a;g.drawImage(glow,s[0]-r,s[1]-r,r*2,r*2);g.globalAlpha=1;g.globalCompositeOperation='source-over';continue}
+    if(p.type==='spark'){g.globalCompositeOperation='lighter';g.fillStyle=`rgba(255,220,160,${a})`;g.fillRect(s[0]-1.5,s[1]-1.5,3,3);g.globalCompositeOperation='source-over';continue}
+    const w=Math.max(2,p.size*s[2]);
+    g.save();g.translate(s[0],s[1]);g.rotate(p.rot);g.globalAlpha=a;
+    g.fillStyle=p.type==='splash'?'#BFD4FF':'#A3ADC9';
+    g.fillRect(-w,-w*.6,w*2,w*1.2);g.restore();
+  }
+  g.globalAlpha=1;g.restore();
+  if(S.opt.idle)return;
+  // 가장자리 · 활 · 조준점 · 화살통
+  const edge=(rgb,a)=>{if(a<=.01)return;const v=g.createRadialGradient(W/2,H*.45,H*.2,W/2,H*.45,H*.75);v.addColorStop(0,`rgba(${rgb},0)`);v.addColorStop(1,`rgba(${rgb},${Math.min(1,a)})`);g.fillStyle=v;g.fillRect(0,0,W,H)};
+  edge('3,5,14',focus*.6);                                           // 집중: 가장자리가 어두워진다
+  edge('224,71,58',S.danger*(.22+.16*Math.sin(S.t*14))+S.flash*.6);   // 위험: 붉게 뛴다
+  g.strokeStyle='#FFD45A';g.lineWidth=2; // 찍힌 표적
+  for(const m of aim.marks){const z=m.o.z-S.camZ;if(z<.8||!m.o.alive)continue;const s=P(m.o.x+m.lx,m.o.y+m.ly,z);
+    g.beginPath();g.arc(s[0],s[1],13,0,6.29);g.moveTo(s[0]-19,s[1]);g.lineTo(s[0]-8,s[1]);g.moveTo(s[0]+8,s[1]);g.lineTo(s[0]+19,s[1]);g.stroke()}
+  const ap=aimPoint(),ax=ap[0],ay=ap[1],p=aim.down?Math.min(1,aim.held/C.fullDraw):0,gold=p>=1;
+  drawBow(ax,ay,p,gold);
+  g.strokeStyle=g.fillStyle=gold?'#FFD45A':aim.down?'rgba(243,235,221,.9)':'rgba(243,235,221,.45)';g.lineWidth=gold?2.5:1.5;
+  g.beginPath();g.arc(ax,ay,gold?8:12-p*4,0,6.29);g.stroke();g.fillRect(ax-1,ay-1,2,2);
+  if(S.breath<1||aim.down){g.strokeStyle='rgba(255,212,90,.55)';g.lineWidth=2;g.beginPath();g.arc(ax,ay,19,-1.57,-1.57+6.283*S.breath);g.stroke()} // 숨 — 집중할 수 있는 시간
+  const qx=W-24,qy=H-70;
+  if(S.opt.practice){g.fillStyle='rgba(243,235,221,.25)';g.fillRect(16,14,W-32,2);g.fillStyle='#FFD45A';g.fillRect(16,14,(W-32)*Math.max(0,1-S.t/C.practiceTime),2)}
+  else{ // 화살 수는 숫자가 아니라 깃으로 보인다. 셋 남으면 붉어진다
+    g.lineCap='round';g.lineWidth=3;g.strokeStyle=S.arrows<=3?'#E0473A':'#F3EBDD';g.beginPath();
+    for(let i=0;i<S.arrows;i++){const x=qx-(i%6)*9,y=qy-((i/6)|0)*22;g.moveTo(x,y);g.lineTo(x-4,y-16)}
+    g.stroke();
+  }
+  g.strokeStyle='#FFD45A';g.lineWidth=2.5; // 돌아오는 화살
+  for(const q of S.gains){if(q.t<0)continue;const e=q.t*q.t*(3-2*q.t),e0=Math.max(0,e-.12);
+    g.beginPath();g.moveTo(q.x+(qx-q.x)*e0,q.y+(qy-q.y)*e0);g.lineTo(q.x+(qx-q.x)*e,q.y+(qy-q.y)*e);g.stroke()}
+  if(S.banner){const b=S.banner,sc=1+.6*Math.max(0,1-b.t/.12); // 꿰기 · 연쇄 · 불화살 한마디
+    g.font=`${Math.round(46*sc)}px Jua, 'Malgun Gothic', sans-serif`;g.textAlign='center';g.fillStyle=`rgba(255,212,90,${Math.max(0,1-b.t/.9)})`;
+    g.shadowColor='#FF7A3C';g.shadowBlur=20;g.fillText(b.text,W/2,H*.27);g.shadowBlur=0}
+}
+
+// ── 결과 · 버튼
+function showResult(){
+  const s=S,r0=s.opt.room||0,d=Math.round(s.camZ-r0*SEG),pct=(a,b)=>b?Math.round(a/b*100)+'%':'–',f2=s.first2===null?'없음':s.first2.toFixed(1)+'초';
+  let best=0;try{best=+localStorage.getItem('lp_best3')||0;if(!s.opt.practice&&!r0&&d>best)localStorage.setItem('lp_best3',d)}catch(e){}
+  $('rDist').textContent=d;
+  $('rBest').textContent=s.opt.practice?'연습 판':r0?`${r0+1}번 방부터 — 기록은 1번 방부터만 잰다`:!best?'첫 기록':d>best?`새 기록 · 앞선 최고 ${best} m`:`최고 ${best} m`;
+  $('rStats').innerHTML=[['버틴 시간',s.t.toFixed(1)+'초'],['닿은 방',`${s.roomN+1}번째 · ${ROOMS[s.roomN%ROOMS.length].name}`],['쓰러뜨린 로봇',s.kills],['떨어뜨린 드론',s.downs],['쏜 화살',s.shots],['명중률',pct(s.hitShots,s.shots)],
+    ['꿰기 2 · 3 · 4',`${s.chain[2]} · ${s.chain[3]} · ${s.chain[4]}`],['첫 2꿰기',f2],['맞은 횟수',s.hurts]]
+    .map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
+  logLine=`활러시 web7 방 |끌기 ${+$('optDrag').checked} | ${s.opt.practice?'연습':'본판'} | 방 ${r0+1}→${s.roomN+1} | 거리 ${d}m | ${s.t.toFixed(1)}초 | 로봇 ${s.kills} 드론 ${s.downs} | 발사 ${s.shots} | 명중 ${pct(s.hitShots,s.shots)} | 꿰기 1·2·3·4 = ${s.chain.slice(1).join('·')} | 첫2꿰기 ${f2} | 맞음 ${s.hurts} | 보조 ${+!!s.opt.assist} 느림 ${+!!s.opt.slow} | ${W}x${H}`;
+  $('rLog').textContent=logLine;$('copy').textContent='기록 복사';$('result').hidden=false;
+}
+function start(){
+  audioInit();if(AC&&AC.resume)AC.resume();
+  $('menu').hidden=true;$('result').hidden=true;
+  newRun({practice:$('optPractice').checked,assist:$('optAssist').checked,slow:$('optSlow').checked,room:+$('optRoom').value});
+}
+$('start').onclick=start;$('again').onclick=start;
+$('toMenu').onclick=()=>{$('result').hidden=true;$('menu').hidden=false;newRun({idle:true})};
+$('copy').onclick=()=>{(navigator.clipboard?navigator.clipboard.writeText(logLine):Promise.reject())
+  .then(()=>{$('copy').textContent='복사했습니다'},()=>{$('copy').textContent='아래 글을 길게 눌러 복사하세요'})};
+
+// ── 손: 누르면 당기기 시작 → 떼면 쏜다
+cv.addEventListener('pointerdown',e=>{
+  if(!S||S.opt.idle||S.over||aim.down)return;
+  aim.down=true;aim.id=e.pointerId;aim.held=0;aim.cue=false;aim.marks=[];aim.lx=e.clientX;aim.ly=e.clientY;place(e);aim.sx=aim.x;aim.sy=aim.y;aim.still=0;
+  try{cv.setPointerCapture(e.pointerId)}catch(_){}
+});
+// 누른 곳 조금 위가 조준점이다(손가락에 가리지 않게). 「끌어 조준」 토글이면 1차 방식 — 끈 만큼만 움직인다
+function place(e){
+  if($('optDrag').checked){aim.x=clamp(aim.x+(e.clientX-aim.lx)*C.sens,8,W-8);aim.y=clamp(aim.y+(e.clientY-aim.ly)*C.sens,8,H*.8)}
+  else{aim.x=clamp(e.clientX,8,W-8);aim.y=clamp(e.clientY-(e.pointerType==='mouse'?0:H*C.aimLift),8,H*.8)}
+  aim.lx=e.clientX;aim.ly=e.clientY;
+}
+cv.addEventListener('pointermove',e=>{if(aim.down&&e.pointerId===aim.id)place(e)});
+const release=shoot=>e=>{if(!aim.down||e.pointerId!==aim.id)return;if(shoot&&S&&!S.over)fire();aim.down=false;creak(0)};
+cv.addEventListener('pointerup',release(true));cv.addEventListener('pointercancel',release(false));
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('resize',resize);
+
+// ── 자체 확인 (#test): 판정 · 화살 계산이 맞나
+function selfTest(){
+  const ok=(c,m)=>{if(!c)throw new Error('selftest 실패: '+m)};
+  const shoot=(x,y,z,held)=>{const s=P(x,y,z);aim.x=s[0];aim.y=s[1];aim.held=held;aim.down=true;fire();aim.down=false;S.t+=1;while(S.pending.length)land(S.pending.shift())};
+  const crew=()=>{S.foes=[foe(1,.3,120,0),foe(1.2,.3,121.3,0),foe(.9,.3,122.6,0)]};
+  newRun({});S.camZ=100;crew();
+  let s=P(1.1,1.5,21.3);
+  ok(cast(s[0],s[1],true,1).length===3,'한 줄로 선 로봇 셋을 금빛 화살이 꿴다');
+  ok(cast(s[0],s[1],false,.3).length===1,'덜 당긴 화살은 맨 앞 하나만 맞힌다');
+  ok(cast(s[0]+80,s[1],true,1).length===0,'빗나가면 아무것도 안 맞는다');
+  S.arrows=5;shoot(1.1,1.5,21.3,1);
+  ok(S.arrows===10&&S.kills===3&&S.foes.every(f=>!f.alive),'셋을 꿰면 화살 -1 +6, 셋 다 쓰러진다');
+  S.missiles=[{k:'M',x:0,y:1.5,z:110,alive:true}];S.arrows=5;S.breath=0;shoot(0,1.5,10,.1);
+  ok(S.downs===1&&S.arrows===5,'날아오는 드론을 톡 쳐서 떨어뜨리면 화살이 돌아온다');
+  ok(S.breath===C.breathHit,'숨은 맞혀야 돌아온다 — 하나 맞히면 1/4');
+  newRun({});S.camZ=100;S.streak=C.fireAt;S.foes=[foe(0,.3,110,0),foe(1,.3,110,0),foe(-1,.3,110,0)];shoot(0,1.5,10,.1);
+  ok(S.foes.every(f=>!f.alive),'불화살은 톡 쳐도 둘레의 로봇까지 쓰러뜨린다');
+  ok(['head','belly','knee','arm'].join()===[zoneOf(0,2.1),zoneOf(0,1.3),zoneOf(0,.5),zoneOf(.45,1.3)].join(),'맞은 자리를 머리 · 코어 · 무릎 · 팔로 가른다');
+  newRun({});S.camZ=100;S.arrows=5;S.foes=[foe(-2,.3,115,0),foe(0,.3,115,0),foe(2,.3,115,0)];
+  aim.marks=S.foes.map(o=>({o,lx:0,ly:2.1}));aim.held=.3;aim.down=true;fire();aim.down=false;S.t+=1;while(S.pending.length)land(S.pending.shift());
+  ok(S.kills===3&&S.arrows===5&&S.bodies.every(b=>b.dead.zone==='head'),'찍어 둔 셋에게 한 발씩 — 찍은 자리(머리)에 맞는다');
+  newRun({});S.camZ=100;S.foes=[foe(0,.3,115,0)];mark(P(0,1.6,15));mark(P(0,2.4,15));
+  ok(aim.marks.length===1&&zoneOf(aim.marks[0].lx,aim.marks[0].ly)==='head','같은 로봇에 다시 멈추면 찍힌 자리만 옮겨진다(몸 → 머리)');
+  S.arrows=5;hurt(C.hitCost);ok(S.arrows===3&&S.streak===0&&!S.over,'드론에 맞으면 화살 -2, 불화살이 꺼진다');
+  for(const zone of['head','belly','knee','arm','blast'])for(const t of[0,.2,.6,1.1]){const f=foe(0,.3,110,0);f.dead={zone,side:1,t};drawFoe(f,10)} // 부서지는 그림 다섯 가지가 오류 없이 그려진다
+  ok(roomAt(0).i===0&&roomAt(SEG+1).i===1&&roomAt(2*SEG+1).i===2&&roomAt(3*SEG+1).i===0&&roomAt(C.roomLen+1).gap&&!roomAt(C.roomLen-1).gap,'방은 거리로 나뉘고 셋이 돈다 — 방 끝은 틈이다');
+  newRun({});S.camZ=100;S.arrows=5;{const sh=foe(0,.3,115,0),back=foe(0,.3,116.3,0);sh.shield=true;S.foes=[sh,back];
+    shoot(0,1.6,15,1);ok(sh.alive&&back.alive&&S.kills===0&&S.arrows===4,'방패 로봇의 몸을 쏘면 막힌다 — 금빛 화살도 뒤까지 못 간다');
+    shoot(0,2.4,15,.1);ok(!sh.alive&&back.alive&&S.kills===1,'방패 로봇은 머리를 쏘면 쓰러진다')}
+  S.camZ=SEG-40;{const f=foe(0,.3,S.camZ+10,0);f.shield=true;drawFoe(f,10);drawBoat({x:0,z:S.camZ+9,vz:0,len:1.6,w:1.7});drawGate(SEG)} // 방패 · 너벅선 · 문이 오류 없이 그려진다
+  {aim.x=W*.85;aim.y=H*.25;const q=P(0,C.eye,1e6),wx=(aim.x-q[0])/F*1e6,wy=C.eye-(aim.y-q[1])/F*1e6; // 조준점 밑의 아주 먼 점
+    for(let i=0;i<40;i++)zoom(C.fovDrawn,1/60);const a=P(wx,wy,1e6);
+    ok(fov<C.fov-10&&Math.hypot(a[0]-aim.x,a[1]-aim.y)<.5,'확대해도 조준점 밑의 것이 밀려나지 않는다');
+    for(let i=0;i<120;i++)zoom(C.fov,1/60);ok(Math.hypot(OX,OY)<1,'확대가 풀리면 화면 가운데로 돌아온다');
+    fov=C.fov;F=(H/2)/Math.tan(fov*Math.PI/360);OX=OY=0}
+  document.body.dataset.selftest='ok';console.log('selftest ok');
+  newRun({idle:true});
+}
+
+resize();newRun({idle:true});
+if(location.hash==='#test')selfTest();
+let last=0;
+requestAnimationFrame(function loop(ts){
+  const rdt=Math.min(.05,(ts-last)/1000||0);last=ts;
+  if(aim.down){aim.held+=rdt;creak(Math.min(1,aim.held/C.fullDraw));
+    if(!aim.cue&&aim.held>=C.fullDraw){aim.cue=true;sfx.full();vib(12)} // 꽉 당김 신호
+    // 꾹 누른 채 조준점이 표적 위에 잠깐 멈추면 그 자리가 찍힌다(스치면 안 찍힌다) — 떼면 찍힌 것마다 한 발씩 나간다
+    if(aim.held>.15&&!S.over&&!S.opt.idle){
+      if(Math.hypot(aim.x-aim.sx,aim.y-aim.sy)>C.markStill){aim.sx=aim.x;aim.sy=aim.y;aim.still=0}
+      else if((aim.still+=rdt)>=C.markDwell){aim.still=0;mark(aimPoint())}
+    }
+  }
+  const want=aim.down?C.fov+(C.fovDrawn-C.fov)*Math.min(1,aim.held/C.fullDraw):C.fov; // 당기면 확대
+  zoom(want,rdt);
+  const calm=aim.down&&aim.held>.1&&S.breath>0&&!S.over&&!S.opt.idle; // 집중: 꾹 누르는 동안 세상이 느려진다
+  focus+=((calm?1:0)-focus)*Math.min(1,rdt*12);
+  if(calm)S.breath=Math.max(0,S.breath-rdt/C.breathUse); // 돌아오는 것은 land() 에서 맞힐 때만
+  let dt=rdt*(1-(1-C.focusScale)*focus);
+  if(S.freeze>0){S.freeze-=rdt;dt=0}else if(S.slowT>0){S.slowT-=rdt;dt*=.4}
+  if(!S.over)update(dt);
+  fx(dt);draw();
+  requestAnimationFrame(loop);
+});
+window.lp={C,aim,P,cast,mid,get S(){return S}}; // 개발용 손잡이
+})();
+</script>

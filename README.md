@@ -14,6 +14,7 @@ YouTube API 규정 준수 감사가 **기본 액세스 URL**과 **개인정보�
 | `frog-pond/play/` | <https://kangjufam.github.io/frog-pond/play/> | 테라리움(가칭) 웹 빌드 — 아이폰 · 브라우저 사람 테스트용(검색 제외 noindex). 빌드 원본은 `kangjufam-app-frog-pond` `BuildPlayer.BuildWeb` → `app/Builds/web` 을 통째로 덮어쓴다 |
 | `hidden-object/play/` | <https://kangjufam.github.io/hidden-object/play/> | 숨은그림찾기(가칭) 웹 빌드 — 아이폰 · 브라우저 사람 테스트용(검색 제외 noindex). 빌드 원본은 `kangjufam-app-hidden-object` `BuildWeb` → `app/Builds/web` 을 통째로 덮어쓴다 |
 | `spot-diff/play/` | <https://kangjufam.github.io/spot-diff/play/> | 틀린그림찾기(가칭) 웹 빌드 — 아이폰 · 브라우저 사람 테스트용(검색 제외 noindex). 빌드 원본은 `kangjufam-app-spot-diff` `BuildWeb` → `app/Builds/web` 을 통째로 덮어쓴다 |
+| `bow-rush/play/` | <https://kangjufam.github.io/bow-rush/play/> | 활 러시(가칭) 웹 프로토 — 폰 · 브라우저 사람 테스트용(검색 제외 noindex). 원본은 `kangjufam-app-bow-rush` `prototype/index.html` 한 파일 — 그대로 복사해 덮어쓴다 |
 
 내용을 고치면 `minecraft-auto-channel/docs/API-AUDIT.md` 의 답안과 어긋나지 않는지
 확인할 것. 감사팀은 양쪽을 대조한다.
