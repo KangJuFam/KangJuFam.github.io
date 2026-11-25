@@ -21,14 +21,14 @@
 <h1>개인정보처리방침</h1>
 <p class="lede">
   파이프 소방대 (Pipe Brigade) — Android 앱 · 패키지 <code>com.kangjufamily.mulgilrush</code><br />
-  개발자 KangJuFamily (운영 강주팸 스튜디오 · KangJuFam Studio) · 시행일 2026-11-24
+  개발자 KangJuFamily (운영 강주팸 스튜디오 · KangJuFam Studio) · 시행일 2026-11-26
 </p>
 
 <div class="callout">
   <p>
     <strong>이 앱은 자체 회원가입·로그인이 없고, 이름·이메일·전화번호 등 개인 식별 정보를 수집하지 않습니다.</strong>
-    앱이 개발자 서버로 보내는 데이터는 없고, 앱 안 결제도 없습니다. 광고 표시를 위해 Google AdMob SDK 가 동작하며,
-    그 SDK 가 처리하는 정보는 아래 3장 · 4장에 적었습니다.
+    앱이 개발자 서버로 보내는 데이터는 없고, 앱 안 결제도 없습니다. 광고 표시를 위해 Google AdMob SDK 가, 순위표 · 업적 · 게임 통계를 위해 Google Play 게임즈 서비스 SDK 가 동작하며,
+    그 SDK 들이 처리하는 정보는 아래 3장 · 4장에 적었습니다.
   </p>
 </div>
 
@@ -41,14 +41,15 @@
       <li>홈의 챌린지 버튼을 한 번이라도 눌렀는지(「새 모드」 표시를 끄기 위해)</li>
       <li>설치 뒤 플레이한 판 수와 처음 실행한 날짜</li>
       <li>Google Play 평가 카드를 띄운 횟수와 마지막으로 띄운 날짜(같은 사용자에게 너무 자주 묻지 않기 위해)</li>
+      <li>Google Play 게임즈 순위표에 크기마다 마지막으로 올린 최고 점수(같은 기록을 거듭 올리지 않기 위해), 챌린지에서 불을 끈 집 수와 아슬아슬 진화 수의 누적, 챌린지 한 판 최고 콤보, 어려움 한 판에서 불을 끈 집의 최고 수(Google Play 게임즈에 연결되기 전에 한 판도 다음 연결 때 업적에 반영하기 위해)</li>
     </ul>
   </li>
-  <li>이 값들은 앱을 삭제하거나 기기 설정에서 이 앱의 데이터를 지우면 함께 지워집니다. 이 값들 자체는 외부로 전송되지 않습니다.</li>
+  <li>이 값들은 앱을 삭제하거나 기기 설정에서 이 앱의 데이터를 지우면 함께 지워집니다. 이 값들 자체는 외부로 전송되지 않습니다(순위표 · 업적 · 게임 통계로 보내는 값은 4장).</li>
 </ul>
 
 <h2>2. 앱이 요구하는 권한</h2>
 <ul>
-  <li>인터넷 접근(<code>INTERNET</code>) — 광고와 광고 동의 확인에만 쓰입니다.</li>
+  <li>인터넷 접근(<code>INTERNET</code>) — 광고, 광고 동의 확인, Google Play 게임즈(순위표 · 업적 · 게임 통계)에만 쓰입니다.</li>
   <li>광고 ID(<code>AD_ID</code>) — AdMob 광고에 쓰입니다(3장).</li>
   <li>광고 SDK 가 자동으로 넣는 권한 — 네트워크 상태 확인, Android 광고 서비스(광고 ID · 기여 분석 · 관심 주제), 백그라운드 작업 유지.</li>
 </ul>
@@ -73,6 +74,7 @@
 
 <h2>4. 제3자 제공</h2>
 <p>앱에 포함된 Google AdMob SDK 가 3장의 정보를 Google 에 전송합니다. 개발자가 직접 수집·보관하거나 제3자에게 제공하는 개인정보는 없습니다.</p>
+<p><strong>순위표 · 업적 · 게임 통계 — Google Play 게임즈 서비스.</strong> 기기에 Google Play 게임즈가 로그인되어 있으면 앱이 켜질 때 Google Play 게임즈 서비스에 자동으로 연결됩니다(연결되지 않았으면 홈 화면 오른쪽 위의 순위표 · 업적 버튼을 눌러 직접 연결할 수 있습니다). 연결되어 있으면 결과 화면이 뜰 때 그 판의 챌린지 점수와 아직 올리지 않은 최고 점수가 판 크기별 순위표로 보내지고, 순위표에는 Google Play 게임즈 프로필 이름(게이머 태그)과 아바타가 함께 보입니다. 또 연결되어 있으면 업적을 달성하거나 진행한 상태와, 판이 끝날 때 그 판의 결과 숫자(챌린지 — 불을 끈 집 수 · 아슬아슬 진화 수 · 최고 콤보, 스테이지 — 깬 단계의 별 수 · 별 셋으로 깬 단계 수)가 Google Play 게임즈 서비스로 보내져 Google Play 게임즈 프로필의 업적 · 게임 통계에 보입니다. 다른 사람이 볼 수 있는지는 Google Play 게임즈 프로필 공개 설정을 따릅니다. 이 SDK 는 그 밖에 SDK 안정성을 위한 분석 · 진단 정보를 처리할 수 있습니다. 이 정보는 Google 이 <a href="https://policies.google.com/privacy">Google 개인정보처리방침</a>에 따라 처리하며, 개발자는 이 정보를 따로 서버에 모으거나 저장하지 않습니다.</p>
 <p>신기록 결과 화면에서 가끔 Google Play 의 평가 카드(인앱 평가)가 뜰 수 있습니다. 별점과 리뷰는 Google Play 에 직접 남으며 Google Play 의 정책에 따라 처리 · 공개됩니다. 앱은 별점 · 리뷰 내용이나 평가를 남겼는지 여부를 받지 않습니다.</p>
 <p>새 버전이 나오면 Google Play 의 업데이트 안내 창(인앱 업데이트)이 뜰 수 있습니다. 업데이트가 있는지 확인하고 내려받는 일은 Google Play 가 Google Play 의 정책에 따라 처리하며, 앱은 그 과정의 정보를 따로 모으거나 보내지 않습니다.</p>
 
@@ -83,7 +85,7 @@
 </p>
 
 <h2>6. 데이터 삭제</h2>
-<p>앱을 삭제하거나 기기 설정 → 앱 → 이 앱 → 저장공간에서 데이터를 지우면(기기마다 메뉴 이름이 다를 수 있음) 기기 안의 모든 데이터(1장)가 지워집니다. 개발자 쪽에 남는 데이터가 없으므로 별도의 삭제 요청 절차가 필요하지 않습니다.</p>
+<p>앱을 삭제하거나 기기 설정 → 앱 → 이 앱 → 저장공간에서 데이터를 지우면(기기마다 메뉴 이름이 다를 수 있음) 기기 안의 모든 데이터(1장)가 지워집니다. 개발자 쪽에 남는 데이터가 없으므로 별도의 삭제 요청 절차가 필요하지 않습니다. 순위표 기록 · 업적 · 게임 통계 등 Google Play 게임즈의 이 게임 데이터는 <a href="https://play.google.com/games/profile">Google Play 게임즈 프로필</a> 또는 <a href="https://myaccount.google.com">Google 계정</a>에서 지울 수 있습니다.</p>
 
 <h2>7. 변경</h2>
 <p>이 문서가 바뀌면 이 페이지에 새 시행일과 함께 게시합니다.</p>
@@ -97,15 +99,15 @@
 <hr />
 
 <h2 style="border-top:none;padding-top:0">Privacy Policy (English)</h2>
-<p class="lede">Pipe Brigade — Android app · package <code>com.kangjufamily.mulgilrush</code> · Developer KangJuFamily (operated by KangJuFam Studio) · Effective 2026-11-24</p>
+<p class="lede">Pipe Brigade — Android app · package <code>com.kangjufamily.mulgilrush</code> · Developer KangJuFamily (operated by KangJuFam Studio) · Effective 2026-11-26</p>
 
-<p><strong>This app has no account or sign-in of its own and does not collect any personally identifiable information</strong> (name, e-mail, phone number, etc.). The app sends nothing to any developer server and has no in-app purchases. Ads are served by the Google AdMob SDK; what that SDK processes is described in sections 3 and 4.</p>
+<p><strong>This app has no account or sign-in of its own and does not collect any personally identifiable information</strong> (name, e-mail, phone number, etc.). The app sends nothing to any developer server and has no in-app purchases. Ads are served by the Google AdMob SDK and leaderboards, achievements and game stats by the Google Play Games Services SDK; what those SDKs process is described in sections 3 and 4.</p>
 
 <h3>1. Data stored only on your device</h3>
-<p>The following are kept in the app's private storage and may be included in your Google account backup if Android Auto Backup is on: your best score for each Challenge board size (Easy, Normal, Hard) and the size you picked last; stage progress (unlocked stages and the best stars earned on each); whether you have tapped the Challenge button on the home screen (to hide the "new mode" badge); the number of runs played since install and the date of first launch; and how many times the Google Play rating card has been shown and the date it was last shown (so you are not asked too often). These values themselves never leave the device and are removed when you uninstall the app or clear its data in device settings.</p>
+<p>The following are kept in the app's private storage and may be included in your Google account backup if Android Auto Backup is on: your best score for each Challenge board size (Easy, Normal, Hard) and the size you picked last; stage progress (unlocked stages and the best stars earned on each); whether you have tapped the Challenge button on the home screen (to hide the "new mode" badge); the number of runs played since install and the date of first launch; how many times the Google Play rating card has been shown and the date it was last shown (so you are not asked too often); and the best score last posted to the Google Play Games leaderboard for each size (so the same record is not posted again), running totals of houses whose fire you put out and last-second saves in Challenge, your best combo in a Challenge run and the most houses put out in one Hard run (so runs played before connecting to Google Play Games still count toward achievements the next time you connect). These values themselves never leave the device (what is sent to leaderboards, achievements and game stats is in section 4) and are removed when you uninstall the app or clear its data in device settings.</p>
 
 <h3>2. Permissions</h3>
-<p><code>INTERNET</code> (for ads and ad consent only), <code>AD_ID</code> (for AdMob ads) and permissions the ads SDK adds automatically (network state, Android ad services: advertising ID, attribution, topics; background work). No camera, location, contacts or storage permissions are requested.</p>
+<p><code>INTERNET</code> (for ads, ad consent and Google Play Games leaderboards, achievements and game stats), <code>AD_ID</code> (for AdMob ads) and permissions the ads SDK adds automatically (network state, Android ad services: advertising ID, attribution, topics; background work). No camera, location, contacts or storage permissions are requested.</p>
 
 <h3>3. Advertising — Google AdMob</h3>
 <p>The app is free and ad-supported. Ads are provided by Google LLC's AdMob and come in one kind only: occasional full-screen ads shown after a run ends, before the result screen. No ads appear during play. To select ads and prevent fraud the AdMob SDK may process the Android Advertising ID (which you can reset or opt out of in device settings), device information (model, OS version, language, screen size), an approximate location inferred from the IP address, ad events (impressions, clicks) and crash/performance diagnostics. Google handles this data under its own policies: <a href="https://policies.google.com/privacy">Google Privacy Policy</a> · <a href="https://policies.google.com/technologies/ads">How Google uses information from ads</a>. The developer does not access or retain this data.</p>
@@ -113,6 +115,7 @@
 
 <h3>4. Third parties</h3>
 <p>The Google AdMob SDK included in the app sends the data in section 3 to Google. The developer itself collects, retains or shares no personal data.</p>
+<p><strong>Leaderboards, achievements and game stats — Google Play Games Services.</strong> If Google Play Games is signed in on the device, the app connects to Google Play Games Services automatically at launch (if it is not connected, you can connect by tapping the leaderboard or achievements button at the top right of the home screen). While connected, when the result screen appears the Challenge score of that run and any best score not yet posted are sent to the leaderboard for that board size, and the leaderboard shows your Google Play Games profile name (gamertag) and avatar with it. While connected, achievement unlocks and progress, and when a run ends its result numbers (Challenge: houses put out, last-second saves and best combo; Stage: stars earned on the cleared stage and the number of stages cleared with three stars) are also sent to Google Play Games Services and appear as achievements and game stats on your Google Play Games profile. Who can see it follows your Google Play Games profile visibility setting. The SDK may also process analytics and diagnostics for SDK stability. Google handles this data under the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>; the developer does not collect or store it on any server.</p>
 <p>On a new-best result screen the app may occasionally show Google Play's in-app rating card. Ratings and reviews go directly to Google Play and are handled and published under Google Play's policies. The app does not receive your rating, your review text or whether you left one.</p>
 <p>When a new version is available, Google Play's update prompt (in-app updates) may appear. Checking for and downloading updates is handled by Google Play under Google Play's policies; the app does not collect or send any information from that process.</p>
 
@@ -120,7 +123,7 @@
 <p>The app is not directed at children, and no information is knowingly collected from children. Ads are requested only at a rating suitable for all ages (G). If you believe a child under 14 has provided data, contact us and it will be addressed immediately.</p>
 
 <h3>6. Deletion</h3>
-<p>Uninstalling the app, or clearing its data in device settings (Settings → Apps → this app → Storage; names vary by device), removes all on-device data. No data exists on the developer's side, so no separate deletion request is needed.</p>
+<p>Uninstalling the app, or clearing its data in device settings (Settings → Apps → this app → Storage; names vary by device), removes all on-device data. No data exists on the developer's side, so no separate deletion request is needed. Google Play Games data for this game, including leaderboard records, achievements and game stats, can be deleted from your <a href="https://play.google.com/games/profile">Google Play Games profile</a> or your <a href="https://myaccount.google.com">Google Account</a>.</p>
 
 <h3>7. Changes</h3>
 <p>Updates are posted on this page with a new effective date.</p>
